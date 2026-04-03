@@ -1,0 +1,247 @@
+---
+title: "Vue integration"
+description: "Add particle animations to Vue 2 and Vue 3 applications using the official tsParticles Vue components."
+keywords: ["vue", "vue2", "vue3", "tsparticles", "particles", "animation"]
+---
+
+tsParticles ships separate packages for Vue 2 and Vue 3. Both expose a `Particles` component and accept the same configuration options.
+
+<Tabs>
+  <Tab title="Vue 3">
+    ## Installation
+
+    Install `@tsparticles/vue3` alongside your chosen engine bundle.
+
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install @tsparticles/vue3 @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add @tsparticles/vue3 @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add @tsparticles/vue3 @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    ## Global registration
+
+    Register the plugin in your application entry point. Call `initParticlesEngine` to load the engine bundle before mounting the app.
+
+    ```ts main.ts
+    import { createApp } from "vue";
+    import Particles from "@tsparticles/vue3";
+    import { initParticlesEngine } from "@tsparticles/vue3";
+    import { loadSlim } from "@tsparticles/slim";
+    import App from "./App.vue";
+
+    const app = createApp(App);
+
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => {
+      app.use(Particles);
+      app.mount("#app");
+    });
+    ```
+
+    ## Usage in a component
+
+    After global registration, use `<vue-particles>` in any template.
+
+    ```vue App.vue
+    <template>
+      <vue-particles
+        id="tsparticles"
+        :options="particlesOptions"
+        @particles-loaded="onParticlesLoaded"
+      />
+    </template>
+
+    <script setup lang="ts">
+    import type { Container, ISourceOptions } from "@tsparticles/engine";
+
+    const particlesOptions: ISourceOptions = {
+      background: {
+        color: { value: "#0d47a1" },
+      },
+      particles: {
+        number: { value: 80 },
+        color: { value: "#ffffff" },
+        links: {
+          enable: true,
+          color: "#ffffff",
+          distance: 150,
+        },
+        move: {
+          enable: true,
+          speed: 2,
+        },
+        size: { value: { min: 1, max: 3 } },
+      },
+      interactivity: {
+        events: {
+          onHover: { enable: true, mode: "repulse" },
+          onClick: { enable: true, mode: "push" },
+        },
+      },
+      detectRetina: true,
+    };
+
+    function onParticlesLoaded(container: Container) {
+      console.log("Particles loaded", container);
+    }
+    </script>
+    ```
+
+    ## Local registration
+
+    You can register the component locally instead of globally if you only need it in specific components.
+
+    ```vue MyComponent.vue
+    <template>
+      <vue-particles id="tsparticles" :options="particlesOptions" />
+    </template>
+
+    <script setup lang="ts">
+    import { Particles as VueParticles } from "@tsparticles/vue3";
+    import type { ISourceOptions } from "@tsparticles/engine";
+
+    const particlesOptions: ISourceOptions = {
+      particles: {
+        number: { value: 50 },
+        move: { enable: true, speed: 1 },
+      },
+    };
+    </script>
+    ```
+  </Tab>
+  <Tab title="Vue 2">
+    ## Installation
+
+    Install `@tsparticles/vue2` alongside your chosen engine bundle.
+
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install @tsparticles/vue2 @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add @tsparticles/vue2 @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add @tsparticles/vue2 @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    ## Global registration
+
+    Register the plugin in your Vue 2 application entry point.
+
+    ```js main.js
+    import Vue from "vue";
+    import Particles from "@tsparticles/vue2";
+    import { loadSlim } from "@tsparticles/slim";
+
+    Vue.use(Particles);
+
+    // Initialize the engine before mounting
+    import { initParticlesEngine } from "@tsparticles/vue2";
+
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => {
+      new Vue({
+        render: (h) => h(App),
+      }).$mount("#app");
+    });
+    ```
+
+    ## Usage in a component
+
+    ```vue App.vue
+    <template>
+      <vue-particles
+        id="tsparticles"
+        :options="particlesOptions"
+        @particles-loaded="onParticlesLoaded"
+      />
+    </template>
+
+    <script>
+    export default {
+      data() {
+        return {
+          particlesOptions: {
+            background: {
+              color: { value: "#0d47a1" },
+            },
+            particles: {
+              number: { value: 80 },
+              color: { value: "#ffffff" },
+              links: {
+                enable: true,
+                color: "#ffffff",
+                distance: 150,
+              },
+              move: {
+                enable: true,
+                speed: 2,
+              },
+            },
+            interactivity: {
+              events: {
+                onHover: { enable: true, mode: "repulse" },
+                onClick: { enable: true, mode: "push" },
+              },
+            },
+            detectRetina: true,
+          },
+        };
+      },
+      methods: {
+        onParticlesLoaded(container) {
+          console.log("Particles loaded", container);
+        },
+      },
+    };
+    </script>
+    ```
+  </Tab>
+</Tabs>
+
+## Component props
+
+Both `@tsparticles/vue2` and `@tsparticles/vue3` expose the same component props.
+
+| Prop | Type | Description |
+|---|---|---|
+| `id` | `string` | The `id` of the canvas wrapper element. Required when using multiple instances on the same page. |
+| `options` | `ISourceOptions` | The particles configuration object. |
+| `url` | `string` | URL to a remote JSON configuration file. Use as an alternative to `options`. |
+| `particlesLoaded` | event / `@particles-loaded` | Emitted once the particles container finishes loading. The `Container` instance is passed as the event payload. |
+
+## Choosing an engine bundle
+
+Pass any of the standard bundle loaders to `initParticlesEngine`.
+
+```ts
+import { loadBasic } from "@tsparticles/basic";   // Minimal
+import { loadSlim } from "@tsparticles/slim";     // Recommended
+import { loadAll } from "@tsparticles/all";       // Full feature set
+```
+
+<Warning>
+  Call `initParticlesEngine` only once per application lifecycle. Mount the Vue app inside the resolved promise to ensure the engine is ready before any `<vue-particles>` component renders.
+</Warning>

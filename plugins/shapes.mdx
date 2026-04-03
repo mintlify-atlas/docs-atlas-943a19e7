@@ -1,0 +1,586 @@
+---
+title: "Shapes"
+description: "All available tsParticles particle shape packages, their npm names, configuration options, and registration examples."
+keywords: ["tsparticles", "shapes", "IShapeDrawer", "circle", "star", "polygon", "emoji", "image", "text", "particle shape"]
+---
+
+Shapes control how each particle is drawn on the canvas. Each shape is a separate npm package that implements `IShapeDrawer` and registers itself under one or more shape type names. You select a shape by setting `particles.shape.type` in your options to the registered name.
+
+## Registering a shape
+
+Every shape package exports a `load*Shape` function that accepts the engine instance:
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { loadStarShape } from "@tsparticles/shape-star";
+import { loadCircleShape } from "@tsparticles/shape-circle";
+
+await loadStarShape(tsParticles);
+await loadCircleShape(tsParticles);
+
+await tsParticles.load({
+  id: "canvas",
+  options: {
+    particles: {
+      shape: {
+        type: "star", // or "circle"
+        options: {
+          star: {
+            sides: 5,
+            inset: 2,
+          },
+        },
+      },
+    },
+  },
+});
+```
+
+Shape-specific options live under `particles.shape.options.<shapeName>`. The key must match the registered shape type name.
+
+## Available shapes
+
+### circle
+
+**Package:** `@tsparticles/shape-circle` · **Function:** `loadCircleShape` · **Type name:** `"circle"`
+
+Draws a circular arc. Supports a configurable angle range to produce partial arcs (for example, pac-man shapes).
+
+```typescript
+import { loadCircleShape } from "@tsparticles/shape-circle";
+await loadCircleShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "circle",
+      "options": {
+        "circle": {
+          "angle": { "min": 0, "max": 360 }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### square
+
+**Package:** `@tsparticles/shape-square` · **Function:** `loadSquareShape` · **Type name:** `"square"`
+
+Draws a filled or stroked square. No shape-specific options required.
+
+```typescript
+import { loadSquareShape } from "@tsparticles/shape-square";
+await loadSquareShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "square" }
+  }
+}
+```
+
+---
+
+### polygon and triangle
+
+**Package:** `@tsparticles/shape-polygon` · **Functions:** `loadPolygonShape`, `loadGenericPolygonShape`, `loadTriangleShape` · **Type names:** `"polygon"`, `"triangle"`
+
+`loadPolygonShape` registers both `"polygon"` and `"triangle"`. Use `"triangle"` for a fixed 3-sided shape, or `"polygon"` with a configurable `sides` count.
+
+```typescript
+import { loadPolygonShape } from "@tsparticles/shape-polygon";
+await loadPolygonShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "polygon",
+      "options": {
+        "polygon": {
+          "sides": 6
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### star
+
+**Package:** `@tsparticles/shape-star` · **Function:** `loadStarShape` · **Type name:** `"star"`
+
+Draws a star with a configurable number of points and inset ratio that controls how sharp or blunt the points are.
+
+```typescript
+import { loadStarShape } from "@tsparticles/shape-star";
+await loadStarShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "star",
+      "options": {
+        "star": {
+          "sides": 5,
+          "inset": 2
+        }
+      }
+    }
+  }
+}
+```
+
+The `inset` value is the ratio between the outer and inner radius of the star. Higher values produce more elongated points.
+
+---
+
+### line
+
+**Package:** `@tsparticles/shape-line` · **Function:** `loadLineShape` · **Type name:** `"line"`
+
+Draws a straight line segment. Useful for rain or laser-beam effects.
+
+```typescript
+import { loadLineShape } from "@tsparticles/shape-line";
+await loadLineShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "line" }
+  }
+}
+```
+
+---
+
+### image
+
+**Package:** `@tsparticles/shape-image` · **Function:** `loadImageShape` · **Type names:** `"image"`, `"images"`
+
+Renders arbitrary images (PNG, JPG, SVG, GIF) as particles. SVGs support dynamic color replacement. GIFs are animated frame by frame.
+
+```typescript
+import { loadImageShape } from "@tsparticles/shape-image";
+await loadImageShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "image",
+      "options": {
+        "image": {
+          "src": "https://example.com/logo.svg",
+          "width": 100,
+          "height": 100,
+          "replaceColor": true,
+          "gif": false
+        }
+      }
+    }
+  }
+}
+```
+
+<Note>
+  `replaceColor: true` makes the engine replace the image's fill color with the particle color. This only works for SVGs. Set `gif: true` when pointing at a GIF file.
+</Note>
+
+---
+
+### emoji
+
+**Package:** `@tsparticles/shape-emoji` · **Function:** `loadEmojiShape` · **Type name:** `"emoji"`
+
+Renders emoji characters as particles, with optional custom font and padding.
+
+```typescript
+import { loadEmojiShape } from "@tsparticles/shape-emoji";
+await loadEmojiShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "emoji",
+      "options": {
+        "emoji": {
+          "value": ["❄️", "🎄", "⭐"],
+          "font": "Twemoji Mozilla"
+        }
+      }
+    }
+  }
+}
+```
+
+You can also mix emoji with different fonts by supplying an array of objects:
+
+```json
+{
+  "emoji": {
+    "value": [
+      { "value": "🔥", "font": "Twemoji Mozilla" },
+      { "value": "💧", "padding": 2 }
+    ]
+  }
+}
+```
+
+---
+
+### heart
+
+**Package:** `@tsparticles/shape-heart` · **Function:** `loadHeartShape` · **Type name:** `"heart"`
+
+Draws a heart shape using cubic Bézier curves. No shape-specific options required.
+
+```typescript
+import { loadHeartShape } from "@tsparticles/shape-heart";
+await loadHeartShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "heart" }
+  }
+}
+```
+
+---
+
+### cards
+
+**Package:** `@tsparticles/shape-cards` · **Function:** `loadCardsShape` · **Type names:** `"cards"`, and individual suit names (`"spades"`, `"hearts"`, `"diamonds"`, `"clubs"`)
+
+Draws playing card suit symbols. `loadCardsShape` registers both the full card shape and individual suit shapes.
+
+```typescript
+import { loadCardsShape } from "@tsparticles/shape-cards";
+await loadCardsShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "spades" }
+  }
+}
+```
+
+---
+
+### cog
+
+**Package:** `@tsparticles/shape-cog` · **Function:** `loadCogShape` · **Type name:** `"cog"`
+
+Draws a gear / cog shape with configurable teeth.
+
+```typescript
+import { loadCogShape } from "@tsparticles/shape-cog";
+await loadCogShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "cog" }
+  }
+}
+```
+
+---
+
+### arrow
+
+**Package:** `@tsparticles/shape-arrow` · **Function:** `loadArrowShape` · **Type name:** `"arrow"`
+
+Draws a directional arrow. The arrow orientation follows the particle's movement direction.
+
+```typescript
+import { loadArrowShape } from "@tsparticles/shape-arrow";
+await loadArrowShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "arrow" }
+  }
+}
+```
+
+---
+
+### infinity
+
+**Package:** `@tsparticles/shape-infinity` · **Function:** `loadInfinityShape` · **Type name:** `"infinity"`
+
+Draws a figure-eight / lemniscate shape.
+
+```typescript
+import { loadInfinityShape } from "@tsparticles/shape-infinity";
+await loadInfinityShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "infinity" }
+  }
+}
+```
+
+---
+
+### matrix
+
+**Package:** `@tsparticles/shape-matrix` · **Function:** `loadMatrixShape` · **Type name:** `"matrix"`
+
+Renders scrolling matrix-style characters (à la the Matrix movie effect). Supports a configurable `interval` that controls how fast the characters cycle.
+
+```typescript
+import { loadMatrixShape } from "@tsparticles/shape-matrix";
+await loadMatrixShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "matrix",
+      "options": {
+        "matrix": {
+          "interval": { "min": 1, "max": 3 }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### path
+
+**Package:** `@tsparticles/shape-path` · **Function:** `loadPathShape` · **Type name:** `"path"`
+
+Draws an arbitrary SVG `<path>` data string as a particle shape. Useful for custom icons and logos.
+
+```typescript
+import { loadPathShape } from "@tsparticles/shape-path";
+await loadPathShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "path",
+      "options": {
+        "path": {
+          "path": "M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### rounded-polygon
+
+**Package:** `@tsparticles/shape-rounded-polygon` · **Function:** `loadRoundedPolygonShape` · **Type name:** `"rounded-polygon"`
+
+Draws a polygon with rounded corners. Combines the `sides` count of a regular polygon with a `radius` for the corner rounding.
+
+```typescript
+import { loadRoundedPolygonShape } from "@tsparticles/shape-rounded-polygon";
+await loadRoundedPolygonShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "rounded-polygon",
+      "options": {
+        "rounded-polygon": {
+          "sides": 6,
+          "radius": 8
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### rounded-rect
+
+**Package:** `@tsparticles/shape-rounded-rect` · **Function:** `loadRoundedRectShape` · **Type name:** `"rounded-rect"`
+
+Draws a rectangle with rounded corners. The `radius` option accepts a range value.
+
+```typescript
+import { loadRoundedRectShape } from "@tsparticles/shape-rounded-rect";
+await loadRoundedRectShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "rounded-rect",
+      "options": {
+        "rounded-rect": {
+          "radius": { "min": 2, "max": 10 }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### spiral
+
+**Package:** `@tsparticles/shape-spiral` · **Function:** `loadSpiralShape` · **Type name:** `"spiral"`
+
+Draws an Archimedean spiral. `innerRadius`, `lineSpacing`, and `widthFactor` all accept range values for random variation between particles.
+
+```typescript
+import { loadSpiralShape } from "@tsparticles/shape-spiral";
+await loadSpiralShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "spiral",
+      "options": {
+        "spiral": {
+          "innerRadius": 1,
+          "lineSpacing": 1,
+          "widthFactor": 0.1
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### squircle
+
+**Package:** `@tsparticles/shape-squircle` · **Function:** `loadSquircleShape` · **Type name:** `"squircle"`
+
+Draws a squircle — a shape interpolated between a square and a circle — using a superellipse formula. The `exponent` controls the curvature (4 = squircle, 2 = ellipse, higher = more square-like).
+
+```typescript
+import { loadSquircleShape } from "@tsparticles/shape-squircle";
+await loadSquircleShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "squircle",
+      "options": {
+        "squircle": {
+          "exponent": 4,
+          "steps": 64
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### text
+
+**Package:** `@tsparticles/shape-text` · **Function:** `loadTextShape` · **Type names:** `"text"`, `"character"`, `"char"`, `"multiline-text"`
+
+Renders text strings or individual characters as particles. Supports multiple values (randomly selected per particle), custom fonts, font weight, and style.
+
+```typescript
+import { loadTextShape } from "@tsparticles/shape-text";
+await loadTextShape(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": {
+      "type": "char",
+      "options": {
+        "char": {
+          "value": ["A", "B", "C", "1", "2", "3"],
+          "font": "Verdana",
+          "style": "",
+          "weight": "400"
+        }
+      }
+    }
+  }
+}
+```
+
+<Tip>
+  Use `"multiline-text"` as the type to render strings with embedded newline characters as multi-line text particles.
+</Tip>
+
+---
+
+## Writing a custom shape
+
+Implement `IShapeDrawer` from `@tsparticles/engine` and register it with `engine.pluginManager.addShape`.
+
+```typescript
+import { type Engine, type IShapeDrawer, type IShapeDrawData } from "@tsparticles/engine";
+
+class DiamondDrawer implements IShapeDrawer {
+  draw({ context, drawRadius }: IShapeDrawData): void {
+    context.moveTo(0, -drawRadius);
+    context.lineTo(drawRadius, 0);
+    context.lineTo(0, drawRadius);
+    context.lineTo(-drawRadius, 0);
+    context.closePath();
+  }
+}
+
+export async function loadDiamondShape(engine: Engine): Promise<void> {
+  await engine.pluginManager.register(e => {
+    e.pluginManager.addShape(["diamond"], async () => new DiamondDrawer());
+  });
+}
+```
+
+Register the loader before calling `tsParticles.load()`, then use `"diamond"` as the shape type in your configuration.

@@ -1,0 +1,209 @@
+---
+title: "Svelte integration"
+description: "Add particle animations to Svelte and SvelteKit applications using the @tsparticles/svelte component."
+keywords: ["svelte", "sveltekit", "tsparticles", "particles", "animation", "component"]
+---
+
+The `@tsparticles/svelte` package provides a `Particles` component for Svelte. It works with both Svelte 4/5 and SvelteKit.
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/svelte @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/svelte @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/svelte @tsparticles/slim
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Replace `@tsparticles/slim` with the bundle that best fits your needs. Use `@tsparticles/basic` for minimal footprint or `@tsparticles/all` for every available feature.
+</Note>
+
+## Basic usage
+
+<Steps>
+  <Step title="Create a Svelte component">
+    Call `initParticlesEngine` inside `onMount` to ensure the DOM is ready before the engine starts. Use a boolean flag to delay rendering the `<Particles>` component until the engine has finished loading.
+
+    ```svelte ParticlesBackground.svelte
+    <script lang="ts">
+      import { onMount } from "svelte";
+      import Particles, { initParticlesEngine } from "@tsparticles/svelte";
+      import { loadSlim } from "@tsparticles/slim";
+      import type { ISourceOptions } from "@tsparticles/engine";
+
+      let engineReady = false;
+
+      const options: ISourceOptions = {
+        background: {
+          color: { value: "#0d47a1" },
+        },
+        particles: {
+          number: { value: 80 },
+          color: { value: "#ffffff" },
+          links: {
+            enable: true,
+            color: "#ffffff",
+            distance: 150,
+          },
+          move: {
+            enable: true,
+            speed: 2,
+          },
+          opacity: { value: 0.5 },
+          size: { value: { min: 1, max: 3 } },
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: "repulse" },
+            onClick: { enable: true, mode: "push" },
+          },
+        },
+        detectRetina: true,
+      };
+
+      onMount(async () => {
+        await initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        });
+        engineReady = true;
+      });
+    </script>
+
+    {#if engineReady}
+      <Particles id="tsparticles" {options} />
+    {/if}
+    ```
+  </Step>
+  <Step title="Use the component in your page">
+    Import and render the component in any Svelte page or layout.
+
+    ```svelte +page.svelte
+    <script lang="ts">
+      import ParticlesBackground from "$lib/ParticlesBackground.svelte";
+    </script>
+
+    <ParticlesBackground />
+
+    <main>
+      <h1>Welcome</h1>
+    </main>
+    ```
+  </Step>
+</Steps>
+
+## JavaScript example
+
+Without TypeScript, remove the `lang="ts"` attribute and type imports.
+
+```svelte ParticlesBackground.svelte
+<script>
+  import { onMount } from "svelte";
+  import Particles, { initParticlesEngine } from "@tsparticles/svelte";
+  import { loadSlim } from "@tsparticles/slim";
+
+  let engineReady = false;
+
+  const options = {
+    background: { color: { value: "#0d47a1" } },
+    particles: {
+      number: { value: 80 },
+      color: { value: "#ffffff" },
+      links: { enable: true, color: "#ffffff" },
+      move: { enable: true, speed: 2 },
+    },
+    detectRetina: true,
+  };
+
+  onMount(async () => {
+    await initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    });
+    engineReady = true;
+  });
+</script>
+
+{#if engineReady}
+  <Particles id="tsparticles" {options} />
+{/if}
+```
+
+## Using `particlesLoaded`
+
+The `particlesLoaded` prop is called once the container finishes loading, giving you access to the running `Container` instance.
+
+```svelte
+<script lang="ts">
+  import type { Container } from "@tsparticles/engine";
+
+  function onParticlesLoaded(container: Container) {
+    console.log("Particles loaded", container);
+    // container.pause() / container.play() / etc.
+  }
+</script>
+
+{#if engineReady}
+  <Particles
+    id="tsparticles"
+    {options}
+    particlesLoaded={onParticlesLoaded}
+  />
+{/if}
+```
+
+## SvelteKit SSR
+
+<Warning>
+  tsParticles targets the browser. In SvelteKit, do not call `initParticlesEngine` at the module level or in `load` functions — it will run on the server and fail. Always initialize inside `onMount`, which only runs client-side.
+</Warning>
+
+If you need to suppress SSR for the entire particles component, you can also use SvelteKit's dynamic import with `{ ssr: false }` via a wrapper:
+
+```svelte +page.svelte
+<script lang="ts">
+  import { onMount } from "svelte";
+
+  let ParticlesBackground: ConstructorOfATypedSvelteComponent | null = null;
+
+  onMount(async () => {
+    const mod = await import("$lib/ParticlesBackground.svelte");
+    ParticlesBackground = mod.default;
+  });
+</script>
+
+{#if ParticlesBackground}
+  <svelte:component this={ParticlesBackground} />
+{/if}
+```
+
+## Component props
+
+| Prop | Type | Description |
+|---|---|---|
+| `id` | `string` | Sets the `id` on the canvas wrapper element. Required when rendering more than one instance per page. |
+| `options` | `ISourceOptions` | The particles configuration object. |
+| `url` | `string` | URL to a remote JSON configuration file. Use as an alternative to `options`. |
+| `particlesLoaded` | `(container: Container) => void` | Called once the container finishes loading. |
+| `class` | `string` | CSS class applied to the wrapper element. |
+| `style` | `string` | Inline styles applied to the wrapper element. |
+
+## Choosing an engine bundle
+
+```ts
+import { loadBasic } from "@tsparticles/basic"; // Minimal
+import { loadSlim } from "@tsparticles/slim";   // Recommended
+import { loadAll } from "@tsparticles/all";     // Full feature set
+```
+
+Pass the loader of your choice to `initParticlesEngine` inside `onMount`. The engine is a singleton — calling `initParticlesEngine` more than once per page load is safe because subsequent calls are no-ops after the first resolution.

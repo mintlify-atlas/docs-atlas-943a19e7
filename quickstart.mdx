@@ -1,80 +1,154 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quick Start"
+description: "Install tsParticles and launch your first particle animation in minutes."
 ---
 
-## Get started in three steps
+## Choose your installation method
 
-Get your documentation site running locally and make your first customization.
+<Tabs>
+  <Tab title="CDN">
+    Add a script tag to your HTML — no build step required.
 
-### Step 1: Set up your local environment
+    ```html index.html
+    <!DOCTYPE html>
+    <html>
+      <head><title>tsParticles</title></head>
+      <body>
+        <div id="tsparticles"></div>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+        <!-- Full bundle via jsDelivr -->
+        <script src="https://cdn.jsdelivr.net/npm/tsparticles/tsparticles.bundle.min.js"></script>
+        <script>
+          tsParticles.load({
+            id: "tsparticles",
+            options: {
+              particles: {
+                number: { value: 80 },
+                color: { value: "#895ea6" },
+                links: { enable: true, color: "#895ea6", opacity: 0.4 },
+                move: { enable: true, speed: 2 },
+                opacity: { value: 0.5 },
+                size: { value: { min: 1, max: 3 } }
+              },
+              interactivity: {
+                events: {
+                  onHover: { enable: true, mode: "repulse" }
+                }
+              }
+            }
+          });
+        </script>
+      </body>
+    </html>
+    ```
+  </Tab>
+  <Tab title="npm / yarn / pnpm">
+    <Steps>
+      <Step title="Install a bundle">
+        Pick the bundle that fits your needs. `tsparticles` (the full bundle) is a good default.
 
-### Step 2: Deploy your changes
+        <CodeGroup>
+          ```bash npm
+          npm install tsparticles
+          ```
+          ```bash yarn
+          yarn add tsparticles
+          ```
+          ```bash pnpm
+          pnpm add tsparticles
+          ```
+        </CodeGroup>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+        <Tip>
+          Need something lighter? Use `@tsparticles/slim` for interactions without paths/effects, or `@tsparticles/basic` for bare-minimum moving dots. See [Bundles](/bundles) for a full comparison.
+        </Tip>
+      </Step>
+      <Step title="Load the engine and initialize">
+        Import the bundle loader and call it with the `tsParticles` singleton before calling `load`.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+        ```typescript app.ts
+        import { tsParticles } from "@tsparticles/engine";
+        import { loadFull } from "tsparticles";
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+        // Load all features from the full bundle
+        await loadFull(tsParticles);
 
-### Step 3: Go live
+        // Create a particle container
+        const container = await tsParticles.load({
+          id: "tsparticles",
+          options: {
+            particles: {
+              number: { value: 80 },
+              color: { value: "#895ea6" },
+              links: { enable: true, color: "#895ea6", opacity: 0.4 },
+              move: { enable: true, speed: 2 },
+              opacity: { value: 0.5 },
+              size: { value: { min: 1, max: 3 } }
+            },
+            interactivity: {
+              events: {
+                onHover: { enable: true, mode: "repulse" }
+              }
+            }
+          }
+        });
+        ```
+      </Step>
+      <Step title="Add the container element">
+        Add a `div` with the matching `id` to your HTML. tsParticles creates a canvas inside it automatically.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+        ```html
+        <div id="tsparticles" style="width: 100%; height: 100vh;"></div>
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Control the animation
+
+The `load()` call returns a `Container` instance you can use to control playback:
+
+```typescript
+const container = await tsParticles.load({ id: "tsparticles", options: { /* ... */ } });
+
+container.pause();   // freeze animation
+container.play();    // resume animation
+container.refresh(); // reload with current options
+container.destroy(); // remove canvas and clean up
+```
+
+To access a previously loaded container by index:
+
+```typescript
+const container = tsParticles.item(0); // first loaded instance
+container?.pause();
+```
+
+## Load options from a JSON file
+
+Instead of inline options, you can point to a JSON file:
+
+```typescript
+await tsParticles.load({
+  id: "tsparticles",
+  url: "/particles.json"
+});
+```
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Bundles" icon="box" href="/bundles">
+    Compare all available bundles and pick the right feature set.
+  </Card>
+  <Card title="Configuration Options" icon="sliders" href="/configuration/options">
+    Full reference for every top-level configuration option.
+  </Card>
+  <Card title="Framework Integrations" icon="puzzle-piece" href="/integrations/react">
+    Use tsParticles with React, Vue, Angular, Svelte, and more.
+  </Card>
+  <Card title="Presets" icon="star" href="/configuration/presets">
+    Drop-in presets for confetti, fireworks, snow, stars, and more.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

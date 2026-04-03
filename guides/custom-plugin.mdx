@@ -1,0 +1,413 @@
+---
+title: "Creating custom plugins"
+description: "Extend tsParticles with custom shapes, effects, updaters, and plugins using the engine's public interfaces."
+keywords: ["tsparticles", "plugin", "custom shape", "IShapeDrawer", "IPlugin", "IParticleUpdater"]
+---
+
+tsParticles exposes four extension points that let you add new behaviour without forking the library:
+
+| Extension type | Interface | Registered via |
+|----------------|-----------|----------------|
+| Shape | `IShapeDrawer` | `engine.pluginManager.addShape()` |
+| Effect | `IEffectDrawer` | `engine.pluginManager.addEffect()` |
+| Updater | `IParticleUpdater` | `engine.pluginManager.addParticleUpdater()` |
+| Plugin | `IPlugin` | `engine.pluginManager.addPlugin()` |
+
+All four types follow the same pattern: implement the interface, instantiate your class inside a loader function, and register it with the engine before calling `tsParticles.load()`.
+
+## Custom shapes
+
+A shape drawer controls how a particle is drawn on the canvas each frame. Implement `IShapeDrawer` from `@tsparticles/engine`.
+
+### The IShapeDrawer interface
+
+```typescript
+export interface IShapeDrawer<TParticle extends Particle = Particle> {
+  /** Called after the main draw — use for post-processing effects */
+  afterDraw?: (data: IShapeDrawData<TParticle>) => void;
+
+  /** Called before the main draw — use for pre-processing effects */
+  beforeDraw?: (data: IShapeDrawData<TParticle>) => void;
+
+  /** Called when the container is destroyed */
+  destroy?: (container: Container) => void;
+
+  /** Required. Draw the shape path into the canvas context. */
+  draw: (data: IShapeDrawData<TParticle>) => void;
+
+  /** Return the number of logical sides (used for collision calculations) */
+  getSidesCount?: (particle: TParticle) => number;
+
+  /** Called once when the container initialises — use for async resource loading */
+  init?: (container: Container) => Promise<void>;
+
+  /** Called when a particle is created — attach per-particle shape data here */
+  loadShape?: (particle: TParticle) => void;
+
+  /** Called when a particle is destroyed */
+  particleDestroy?: (particle: TParticle) => void;
+
+  /** Called once per particle on creation — use to attach per-particle data */
+  particleInit?: (container: Container, particle: TParticle) => void;
+}
+```
+
+### The IShapeDrawData object
+
+The `draw` method receives an `IShapeDrawData` object with everything needed to render:
+
+```typescript
+interface IShapeDrawData<TParticle extends Particle = Particle> {
+  context: CanvasRenderingContext2D; // the canvas 2D context
+  delta: IDelta;                     // time delta between frames
+  drawPosition: ICoordinates;        // particle position (already scaled)
+  drawRadius: number;                // particle radius (already scaled)
+  drawScale: number;                 // current scale factor
+  fill: boolean;                     // whether to fill the shape
+  opacity: number;                   // particle opacity (0–1)
+  particle: TParticle;               // the particle being drawn
+  pixelRatio: number;                // device pixel ratio for retina displays
+  position: { x: number; y: number }; // position before zoom transforms
+  radius: number;                    // original (unscaled) radius
+  stroke: boolean;                   // whether to stroke the shape
+  transformData: { a: number; b: number; c: number; d: number }; // transform matrix
+}
+```
+
+<Note>
+  Always use `drawPosition` and `drawRadius` rather than `position` and `radius` inside `draw()`. The draw variants already account for scaling and pixel ratio.
+</Note>
+
+### Example: diamond shape
+
+This example implements a custom diamond (rotated square) shape.
+
+<Steps>
+  <Step title="Implement the drawer class">
+    ```typescript
+    // DiamondDrawer.ts
+    import type { IShapeDrawData, IShapeDrawer } from "@tsparticles/engine";
+
+    export class DiamondDrawer implements IShapeDrawer {
+      draw(data: IShapeDrawData): void {
+        const { context, drawPosition, drawRadius } = data;
+        const { x, y } = drawPosition;
+
+        // A diamond is a square rotated 45°, drawn as a rhombus
+        context.moveTo(x, y - drawRadius);       // top
+        context.lineTo(x + drawRadius, y);        // right
+        context.lineTo(x, y + drawRadius);        // bottom
+        context.lineTo(x - drawRadius, y);        // left
+        context.closePath();
+      }
+
+      getSidesCount(): number {
+        return 4;
+      }
+    }
+    ```
+  </Step>
+  <Step title="Write the loader function">
+    The loader function receives the engine instance and registers the shape. Wrap the drawer in an async factory so the module is only loaded when the shape is actually used.
+
+    ```typescript
+    // loadDiamondShape.ts
+    import type { Engine } from "@tsparticles/engine";
+
+    export async function loadDiamondShape(engine: Engine): Promise<void> {
+      await engine.pluginManager.register(e => {
+        e.pluginManager.addShape(["diamond"], async () => {
+          const { DiamondDrawer } = await import("./DiamondDrawer.js");
+          return new DiamondDrawer();
+        });
+      });
+    }
+    ```
+  </Step>
+  <Step title="Register and use the shape">
+    Call your loader before `tsParticles.load()`. After registration the shape name `"diamond"` is available in any particle configuration.
+
+    ```typescript
+    import { tsParticles } from "@tsparticles/engine";
+    import { loadBasic } from "@tsparticles/basic";
+    import { loadDiamondShape } from "./loadDiamondShape.js";
+
+    await loadBasic(tsParticles);
+    await loadDiamondShape(tsParticles);
+
+    await tsParticles.load({
+      id: "particles",
+      options: {
+        particles: {
+          shape: { type: "diamond" },
+          number: { value: 40 },
+          size: { value: { min: 5, max: 15 } },
+          move: { enable: true, speed: 3 },
+        },
+        fullScreen: { enable: true },
+      },
+    });
+    ```
+  </Step>
+</Steps>
+
+### Example: cross shape
+
+A more complex shape using `beforeDraw` to set up a custom stroke style:
+
+```typescript
+// CrossDrawer.ts
+import type { IShapeDrawData, IShapeDrawer } from "@tsparticles/engine";
+
+const armRatio = 0.35; // arm width as a fraction of radius
+
+export class CrossDrawer implements IShapeDrawer {
+  beforeDraw(data: IShapeDrawData): void {
+    data.context.lineWidth = data.drawRadius * armRatio;
+    data.context.lineCap = "round";
+  }
+
+  draw(data: IShapeDrawData): void {
+    const { context, drawPosition, drawRadius } = data;
+    const { x, y } = drawPosition;
+
+    // Horizontal bar
+    context.moveTo(x - drawRadius, y);
+    context.lineTo(x + drawRadius, y);
+
+    // Vertical bar
+    context.moveTo(x, y - drawRadius);
+    context.lineTo(x, y + drawRadius);
+  }
+
+  getSidesCount(): number {
+    return 4;
+  }
+}
+```
+
+Register it the same way:
+
+```typescript
+e.pluginManager.addShape(["cross"], async () => {
+  const { CrossDrawer } = await import("./CrossDrawer.js");
+  return new CrossDrawer();
+});
+```
+
+## Custom updaters
+
+Updaters run every frame and modify particle state (position, size, opacity, colour, etc.). Implement `IParticleUpdater`.
+
+### The IParticleUpdater interface
+
+```typescript
+export interface IParticleUpdater {
+  /** Called after the canvas draw for this particle */
+  afterDraw?: (particle: Particle) => void;
+
+  /** Called before the canvas draw for this particle */
+  beforeDraw?: (particle: Particle) => void;
+
+  /** Return custom colour styles for the particle */
+  getColorStyles?: (
+    particle: Particle,
+    context: CanvasRenderingContext2D,
+    radius: number,
+    opacity: number,
+  ) => IParticleColorStyle;
+
+  /** Return transform values to apply when drawing */
+  getTransformValues?: (particle: Particle) => Partial<IParticleTransformValues>;
+
+  /** Load per-particle options from the global options */
+  loadOptions?: (
+    options: ParticlesOptions,
+    ...sources: (RecursivePartial<IParticlesOptions> | undefined)[]
+  ) => void;
+
+  /** Called when a particle is destroyed */
+  particleDestroyed?: (particle: Particle, override?: boolean) => void;
+
+  /** Reset particle state (called on particle recycle) */
+  reset?: (particle: Particle) => void;
+
+  /** Required. Initialise per-particle state when created. */
+  init(particle: Particle): void;
+
+  /** Required. Return true if this updater should run for this particle. */
+  isEnabled(particle: Particle): boolean;
+
+  /** Required. Update particle state each frame. */
+  update(particle: Particle, delta: IDelta): void;
+}
+```
+
+### Example: pulse updater
+
+An updater that makes particles rhythmically grow and shrink:
+
+```typescript
+// PulseUpdater.ts
+import type { IDelta, IParticleUpdater, Particle } from "@tsparticles/engine";
+
+interface PulseParticle extends Particle {
+  pulsePhase?: number;
+  pulseSpeed?: number;
+  pulseBaseSize?: number;
+}
+
+export class PulseUpdater implements IParticleUpdater {
+  init(particle: PulseParticle): void {
+    particle.pulsePhase = Math.random() * Math.PI * 2;
+    particle.pulseSpeed = 0.05 + Math.random() * 0.05;
+    particle.pulseBaseSize = particle.size.value;
+  }
+
+  isEnabled(particle: PulseParticle): boolean {
+    return particle.pulseBaseSize !== undefined;
+  }
+
+  update(particle: PulseParticle, delta: IDelta): void {
+    if (!this.isEnabled(particle)) return;
+
+    particle.pulsePhase! += particle.pulseSpeed! * delta.factor;
+    const scale = 1 + 0.3 * Math.sin(particle.pulsePhase!);
+    particle.size.value = particle.pulseBaseSize! * scale;
+  }
+}
+```
+
+Register it using `addParticleUpdater`:
+
+```typescript
+engine.pluginManager.addParticleUpdater("pulse", async () => {
+  const { PulseUpdater } = await import("./PulseUpdater.js");
+  return new PulseUpdater();
+});
+```
+
+## Custom plugins
+
+A plugin participates in the container lifecycle — loading options, creating per-container instances, and deciding when it is needed. Implement `IPlugin`.
+
+### The IPlugin interface
+
+```typescript
+export interface IPlugin {
+  /** Unique identifier for this plugin */
+  readonly id: string;
+
+  /** Called to load additional particle-level options from source */
+  loadParticlesOptions?: (
+    container: Container,
+    options: ParticlesOptions,
+    source?: RecursivePartial<IParticlesOptions>,
+  ) => void;
+
+  /** Required. Return a per-container plugin instance. */
+  getPlugin(container: Container): Promise<IContainerPlugin>;
+
+  /** Required. Load top-level options for this container. */
+  loadOptions(container: Container, options: Options, source?: ISourceOptions): void;
+
+  /** Required. Return true if this plugin is needed for the given options. */
+  needsPlugin(options?: ISourceOptions): boolean;
+}
+```
+
+### Example: custom plugin
+
+A plugin that logs whenever a container is loaded (a minimal but complete implementation):
+
+```typescript
+// LoggerPlugin.ts
+import type {
+  Container,
+  IContainerPlugin,
+  IPlugin,
+  ISourceOptions,
+  Options,
+} from "@tsparticles/engine";
+
+class LoggerContainerPlugin implements IContainerPlugin {
+  init(): void {
+    console.log("[LoggerPlugin] Container initialised.");
+  }
+
+  stop(): void {
+    console.log("[LoggerPlugin] Container stopped.");
+  }
+}
+
+export class LoggerPlugin implements IPlugin {
+  readonly id = "logger";
+
+  async getPlugin(_container: Container): Promise<IContainerPlugin> {
+    return new LoggerContainerPlugin();
+  }
+
+  loadOptions(_container: Container, _options: Options, _source?: ISourceOptions): void {
+    // No custom top-level options for this plugin
+  }
+
+  needsPlugin(_options?: ISourceOptions): boolean {
+    // This plugin is always active when registered
+    return true;
+  }
+}
+```
+
+Register it using `addPlugin`:
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { LoggerPlugin } from "./LoggerPlugin.js";
+
+tsParticles.pluginManager.addPlugin(new LoggerPlugin());
+```
+
+## Registration order
+
+<Warning>
+  All shapes, updaters, effects, and plugins must be registered **before** calling `tsParticles.load()`. The `PluginManager` throws an error if you attempt to register after the engine has already initialised.
+</Warning>
+
+The recommended pattern is to collect all registration calls into a single loader function:
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { loadBasic } from "@tsparticles/basic";
+import { loadDiamondShape } from "./loadDiamondShape.js";
+import { LoggerPlugin } from "./LoggerPlugin.js";
+
+async function setup(): Promise<void> {
+  await loadBasic(tsParticles);
+  await loadDiamondShape(tsParticles);
+  tsParticles.pluginManager.addPlugin(new LoggerPlugin());
+
+  await tsParticles.load({
+    id: "particles",
+    options: { /* ... */ },
+  });
+}
+
+setup();
+```
+
+## Using the pluginManager API
+
+The `PluginManager` exposes the following registration methods:
+
+| Method | Purpose |
+|--------|---------|
+| `addShape(names: string[], drawer: ShapeInitializer)` | Register a new particle shape |
+| `addEffect(effect: string, drawer: EffectInitializer)` | Register a new particle effect |
+| `addParticleUpdater(name: string, updater: UpdaterInitializer)` | Register a new particle updater |
+| `addPlugin(plugin: IPlugin)` | Register a new plugin |
+| `addPreset(name: string, options: ISourceOptions)` | Register a reusable config preset |
+| `addColorManager(name: string, manager: IColorManager)` | Register a custom colour format parser |
+
+<Tip>
+  Shape and effect initializers are lazy — they receive an async factory that returns the drawer instance. This keeps the initial bundle smaller because the drawer module is only imported when a container actually uses that shape.
+</Tip>

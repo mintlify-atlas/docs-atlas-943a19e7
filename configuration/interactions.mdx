@@ -1,0 +1,902 @@
+---
+title: "Particle interactions"
+description: "Reference for all tsParticles interaction options — external (mouse/pointer) interactions and particle-to-particle interactions."
+keywords: ["tsparticles", "interactions", "mouse", "hover", "click", "repulse", "attract", "links", "collisions", "bubble", "grab"]
+---
+
+tsParticles supports two categories of interactions:
+
+- **External interactions** — triggered by the mouse cursor or pointer events (hover, click, scroll).
+- **Particle interactions** — behaviors that occur between particles themselves (links, collisions, attraction, repulsion).
+
+Each interaction is provided as a separate npm package and must be loaded into the engine before it can be used. The `tsparticles` full bundle and `@tsparticles/slim` include the most common interactions by default.
+
+<Info>
+  Interaction options are nested under the plugin's key inside `interactivity` (for external) or `particles` (for particle-to-particle). The exact nesting paths are shown per interaction below.
+</Info>
+
+---
+
+## External interactions
+
+External interactions respond to mouse/pointer events. They are configured under `interactivity.events` (to enable the trigger) and under `interactivity.modes` (to configure the behavior).
+
+```json
+{
+  "interactivity": {
+    "detectsOn": "window",
+    "events": {
+      "onHover": { "enable": true, "mode": "repulse" },
+      "onClick": { "enable": true, "mode": "push" }
+    },
+    "modes": {
+      "repulse": { "distance": 100, "duration": 0.4 }
+    }
+  }
+}
+```
+
+<Note>
+  Multiple modes can be active simultaneously by passing an array: `"mode": ["repulse", "bubble"]`.
+</Note>
+
+---
+
+### Attract
+
+**Package:** `@tsparticles/interaction-external-attract`
+
+Pulls nearby particles toward the cursor while the pointer hovers.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.attract.distance" type="number" default="200">
+      Radius in pixels around the cursor within which particles are attracted.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.attract.duration" type="number" default="0.4">
+      Duration in seconds of the attraction effect after the cursor moves away.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.attract.easing" type="string" default="easeOutQuad">
+      Easing function applied to the attraction force. Common values: `"easeOutQuad"`, `"easeInQuad"`, `"linear"`.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.attract.factor" type="number" default="1">
+      Multiplier applied to the attraction force.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.attract.maxSpeed" type="number" default="50">
+      Maximum speed at which particles are pulled toward the cursor.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.attract.speed" type="number" default="1">
+      Base speed of the attraction movement.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "attract" } },
+        "modes": {
+          "attract": {
+            "distance": 200,
+            "duration": 0.4,
+            "factor": 5,
+            "maxSpeed": 50
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Bounce
+
+**Package:** `@tsparticles/interaction-external-bounce`
+
+Particles near the cursor bounce away from it as if hitting a physical boundary.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.bounce.distance" type="number" default="200">
+      Radius around the cursor that acts as the bounce boundary.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "bounce" } },
+        "modes": {
+          "bounce": { "distance": 200 }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Bubble
+
+**Package:** `@tsparticles/interaction-external-bubble`
+
+Particles near the cursor temporarily change size, opacity, or color, creating a bubble effect.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.bubble.distance" type="number" default="400">
+      Radius in pixels around the cursor in which the bubble effect is applied.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.duration" type="number" default="2">
+      Duration in seconds to transition in/out of the bubble state.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.size" type="number">
+      Target size (radius in pixels) for particles inside the bubble radius.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.opacity" type="number">
+      Target opacity for particles inside the bubble radius.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.color" type="string | object | array">
+      Target color for particles inside the bubble radius.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.mix" type="boolean" default="false">
+      When `true`, mixes the bubble color with the particle's original color instead of replacing it.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.bubble.divs" type="object | array">
+      Applies the bubble effect to specific DOM elements instead of the cursor position. See the divs configuration for details.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "bubble" } },
+        "modes": {
+          "bubble": {
+            "distance": 250,
+            "duration": 0.5,
+            "size": 10,
+            "opacity": 1
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Connect
+
+**Package:** `@tsparticles/interaction-external-connect`
+
+Draws lines between nearby particles while the cursor is within range, creating a visible connection zone.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.connect.distance" type="number" default="80">
+      Maximum distance between two particles for a connection line to appear.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.connect.radius" type="number" default="60">
+      Radius around the cursor within which the connection effect is active.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.connect.links.opacity" type="number" default="0.5">
+      Opacity of the connection lines.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "connect" } },
+        "modes": {
+          "connect": {
+            "distance": 80,
+            "radius": 60,
+            "links": { "opacity": 0.5 }
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Grab
+
+**Package:** `@tsparticles/interaction-external-grab`
+
+Draws connection lines from the cursor to nearby particles.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.grab.distance" type="number" default="400">
+      Radius in pixels within which particles are connected to the cursor.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.grab.links.opacity" type="number" default="1">
+      Opacity of the grab lines.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.grab.links.color" type="string | object">
+      Color of the grab lines. Defaults to the particle's own color.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.grab.links.blink" type="boolean" default="false">
+      Enables a random color blink on each frame for grab lines.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.grab.links.consent" type="boolean" default="false">
+      When `true` and color is `"random"`, uses a single random color for all grab lines.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "grab" } },
+        "modes": {
+          "grab": {
+            "distance": 300,
+            "links": { "opacity": 0.8, "color": "#ffffff" }
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Parallax
+
+**Package:** `@tsparticles/interaction-external-parallax`
+
+Shifts particle positions based on mouse movement, creating a depth parallax effect.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.parallax.force" type="number" default="2">
+      Strength of the parallax displacement. Higher values produce more pronounced movement.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.parallax.smooth" type="number" default="10">
+      Smoothing factor for the parallax motion. Higher values make the movement lazier.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "parallax" } },
+        "modes": {
+          "parallax": {
+            "force": 60,
+            "smooth": 10
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Pause
+
+**Package:** `@tsparticles/interaction-external-pause`
+
+Pauses the entire animation while the cursor hovers over the canvas.
+
+No additional mode options are required. Enable it via the hover event:
+
+```json
+{
+  "interactivity": {
+    "events": { "onHover": { "enable": true, "mode": "pause" } }
+  }
+}
+```
+
+---
+
+### Push
+
+**Package:** `@tsparticles/interaction-external-push`
+
+Adds new particles at the click position.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.push.quantity" type="number | RangeValue" default="4">
+      Number of particles to add per click.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.push.default" type="boolean" default="true">
+      Whether to use the default particle options for pushed particles.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.push.groups" type="string[]">
+      Names of particle groups to push instead of default particles.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.push.particles" type="object | array">
+      Custom particle options for particles added by push.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onClick": { "enable": true, "mode": "push" } },
+        "modes": {
+          "push": { "quantity": 4 }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Remove
+
+**Package:** `@tsparticles/interaction-external-remove`
+
+Removes particles nearest to the click position.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.remove.quantity" type="number | RangeValue" default="2">
+      Number of particles to remove per click.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onClick": { "enable": true, "mode": "remove" } },
+        "modes": {
+          "remove": { "quantity": 5 }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Repulse
+
+**Package:** `@tsparticles/interaction-external-repulse`
+
+Pushes particles away from the cursor while hovering.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.repulse.distance" type="number" default="200">
+      Radius in pixels around the cursor from which particles are repelled.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.duration" type="number" default="0.4">
+      Duration in seconds over which particles return to normal after the cursor moves away.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.easing" type="string" default="easeOutQuad">
+      Easing function for the repulse force: `"easeOutQuad"`, `"easeInQuad"`, `"linear"`, etc.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.factor" type="number" default="100">
+      Multiplier for the repulsion force. Higher values push particles away faster.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.maxSpeed" type="number" default="50">
+      Maximum speed at which particles are repelled.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.speed" type="number" default="1">
+      Base speed of the repulsion movement.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.repulse.divs" type="object | array">
+      Applies repulsion to specific DOM elements instead of the cursor. Uses `selectors` to target elements.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "repulse" } },
+        "modes": {
+          "repulse": {
+            "distance": 150,
+            "duration": 0.4,
+            "factor": 100,
+            "maxSpeed": 50
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Slow
+
+**Package:** `@tsparticles/interaction-external-slow`
+
+Slows down particles near the cursor while hovering.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.slow.factor" type="number" default="3">
+      Slowdown multiplier. Higher values slow particles more. The particle speed is divided by this factor.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.slow.radius" type="number" default="200">
+      Radius in pixels around the cursor within which particles are slowed.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "slow" } },
+        "modes": {
+          "slow": { "factor": 5, "radius": 200 }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Trail
+
+**Package:** `@tsparticles/interaction-external-trail`
+
+Emits particles along the path of the cursor as it moves, leaving a trail.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="interactivity.modes.trail.quantity" type="number" default="1">
+      Number of particles to emit at each cursor position update.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.trail.delay" type="number" default="1">
+      Delay in seconds between each particle emission.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.trail.pauseOnStop" type="boolean" default="false">
+      When `true`, stops emitting particles when the cursor is stationary.
+    </ParamField>
+
+    <ParamField body="interactivity.modes.trail.particles" type="object">
+      Custom particle options for the trail particles. Overrides the default particles configuration.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "interactivity": {
+        "events": { "onHover": { "enable": true, "mode": "trail" } },
+        "modes": {
+          "trail": {
+            "delay": 0.005,
+            "pauseOnStop": true,
+            "quantity": 5,
+            "particles": {
+              "size": { "value": 3 },
+              "move": { "speed": 1, "outModes": "destroy" }
+            }
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Pop
+
+**Package:** `@tsparticles/interaction-external-pop`
+
+Destroys particles at the click position, as if popping them.
+
+No additional mode options are required:
+
+```json
+{
+  "interactivity": {
+    "events": { "onClick": { "enable": true, "mode": "pop" } }
+  }
+}
+```
+
+---
+
+### Particle (click-to-spawn)
+
+**Package:** `@tsparticles/interaction-external-particle`
+
+Spawns a particle exactly at the click position using custom options.
+
+```json
+{
+  "interactivity": {
+    "events": { "onClick": { "enable": true, "mode": "particle" } }
+  }
+}
+```
+
+---
+
+## Particle-to-particle interactions
+
+These interactions govern behaviors between particles in the same container.
+
+---
+
+### Links
+
+**Package:** `@tsparticles/interaction-particles-links`
+
+Draws lines between particles that are close to each other, creating a network mesh effect.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="particles.links.enable" type="boolean" default="false">
+      Master switch for the links interaction.
+    </ParamField>
+
+    <ParamField body="particles.links.distance" type="number" default="150">
+      Maximum distance in pixels between two particles for a link line to appear.
+    </ParamField>
+
+    <ParamField body="particles.links.color" type="string | object" default="#ffffff">
+      Color of the link lines. Use `"random"` for random colors per link. Accepts a CSS color string or color object.
+    </ParamField>
+
+    <ParamField body="particles.links.opacity" type="number" default="0.4">
+      Maximum opacity of link lines. Lines fade with distance.
+    </ParamField>
+
+    <ParamField body="particles.links.width" type="number" default="1">
+      Width of the link lines in pixels.
+    </ParamField>
+
+    <ParamField body="particles.links.blink" type="boolean" default="false">
+      When `true` and `color` is `"random"`, the link color changes every frame, creating a blinking effect.
+    </ParamField>
+
+    <ParamField body="particles.links.consent" type="boolean" default="false">
+      When `true` and `color` is `"random"`, all links use the same single random color.
+    </ParamField>
+
+    <ParamField body="particles.links.frequency" type="number" default="1">
+      Probability that a link is drawn between two eligible particles. `1` = always draw, `0.5` = draw half the time.
+    </ParamField>
+
+    <ParamField body="particles.links.id" type="string">
+      When set, only particles sharing the same `id` will link with each other. Useful for separating link groups.
+    </ParamField>
+
+    <ParamField body="particles.links.warp" type="boolean" default="false">
+      When `true`, links wrap across canvas edges — particles near opposite edges will be linked as if the canvas is a torus.
+    </ParamField>
+
+    <ParamField body="particles.links.shadow" type="object">
+      Draws a glow shadow behind each link line. Heavy on performance; use sparingly.
+
+      <Expandable title="shadow properties">
+        <ParamField body="particles.links.shadow.enable" type="boolean" default="false">
+          Enables shadow rendering on links.
+        </ParamField>
+
+        <ParamField body="particles.links.shadow.color" type="string" default="#000000">
+          Shadow color.
+        </ParamField>
+
+        <ParamField body="particles.links.shadow.blur" type="number" default="5">
+          Shadow blur radius in pixels.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="particles.links.triangles" type="object">
+      Fills the triangular areas formed between three mutually-linked particles.
+
+      <Expandable title="triangles properties">
+        <ParamField body="particles.links.triangles.enable" type="boolean" default="false">
+          Enables triangle fill rendering.
+        </ParamField>
+
+        <ParamField body="particles.links.triangles.color" type="string | object">
+          Fill color for the triangles.
+        </ParamField>
+
+        <ParamField body="particles.links.triangles.opacity" type="number">
+          Opacity of the triangle fill.
+        </ParamField>
+
+        <ParamField body="particles.links.triangles.frequency" type="number" default="1">
+          Probability that a valid triangle is filled.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "particles": {
+        "number": { "value": 80 },
+        "links": {
+          "enable": true,
+          "distance": 150,
+          "color": "#ffffff",
+          "opacity": 0.4,
+          "width": 1
+        },
+        "move": { "enable": true, "speed": 2 }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Collisions
+
+**Package:** `@tsparticles/interaction-particles-collisions`
+
+Detects and responds to physical collisions between particles.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="particles.collisions.enable" type="boolean" default="false">
+      Enables collision detection between particles.
+    </ParamField>
+
+    <ParamField body="particles.collisions.mode" type="string" default="bounce">
+      Collision response mode:
+      - `"bounce"` — particles bounce off each other.
+      - `"absorb"` — one particle absorbs the other, growing larger.
+      - `"destroy"` — the smaller particle is destroyed.
+    </ParamField>
+
+    <ParamField body="particles.collisions.maxSpeed" type="number | RangeValue" default="50">
+      Maximum speed cap applied after a collision.
+    </ParamField>
+
+    <ParamField body="particles.collisions.absorb.speed" type="number" default="2">
+      Speed at which the absorbing particle grows (in absorb mode).
+    </ParamField>
+
+    <ParamField body="particles.collisions.bounce" type="object">
+      Energy retention for bounces, same shape as `particles.bounce`.
+
+      <Expandable title="bounce properties">
+        <ParamField body="particles.collisions.bounce.horizontal.value" type="number | RangeValue" default="1">
+          Horizontal energy factor on collision bounce.
+        </ParamField>
+
+        <ParamField body="particles.collisions.bounce.vertical.value" type="number | RangeValue" default="1">
+          Vertical energy factor on collision bounce.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="particles.collisions.overlap" type="object">
+      Controls how overlapping particles are handled.
+
+      <Expandable title="overlap properties">
+        <ParamField body="particles.collisions.overlap.enable" type="boolean" default="true">
+          Allows particles to overlap when they first appear. Disabling forces particles to be placed without overlap.
+        </ParamField>
+
+        <ParamField body="particles.collisions.overlap.retries" type="number" default="0">
+          Number of placement retry attempts to find a non-overlapping position.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "particles": {
+        "number": { "value": 30 },
+        "size": { "value": { "min": 5, "max": 20 } },
+        "collisions": {
+          "enable": true,
+          "mode": "bounce",
+          "maxSpeed": 30
+        },
+        "move": { "enable": true, "speed": 3 }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Attract (particle-to-particle)
+
+**Package:** `@tsparticles/interaction-particles-attract`
+
+Makes particles attract each other as if subject to a gravitational force.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="particles.move.attract.enable" type="boolean" default="false">
+      Enables particle-to-particle attraction.
+    </ParamField>
+
+    <ParamField body="particles.move.attract.distance" type="number | RangeValue" default="200">
+      Maximum distance at which particles attract each other.
+    </ParamField>
+
+    <ParamField body="particles.move.attract.rotate.x" type="number" default="3000">
+      Horizontal rotation factor controlling attraction strength on the x-axis.
+    </ParamField>
+
+    <ParamField body="particles.move.attract.rotate.y" type="number" default="3000">
+      Vertical rotation factor controlling attraction strength on the y-axis.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "particles": {
+        "number": { "value": 100 },
+        "move": {
+          "enable": true,
+          "speed": 2,
+          "attract": {
+            "enable": true,
+            "distance": 200,
+            "rotate": { "x": 600, "y": 1200 }
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Repulse (particle-to-particle)
+
+**Package:** `@tsparticles/interaction-particles-repulse`
+
+Pushes particles away from each other when they get too close.
+
+<AccordionGroup>
+  <Accordion title="Configuration options">
+    <ParamField body="particles.repulse.enabled" type="boolean" default="false">
+      Enables particle-to-particle repulsion.
+    </ParamField>
+
+    <ParamField body="particles.repulse.distance" type="number | RangeValue" default="1">
+      Distance threshold below which repulsion is applied.
+    </ParamField>
+
+    <ParamField body="particles.repulse.duration" type="number | RangeValue" default="1">
+      Duration of the repulsion effect in seconds.
+    </ParamField>
+
+    <ParamField body="particles.repulse.factor" type="number | RangeValue" default="1">
+      Strength multiplier for the repulsion force.
+    </ParamField>
+
+    <ParamField body="particles.repulse.speed" type="number | RangeValue" default="1">
+      Speed at which particles move apart.
+    </ParamField>
+
+    <ParamField body="particles.repulse.value" type="number | RangeValue" default="0">
+      Base repulsion value.
+    </ParamField>
+  </Accordion>
+  <Accordion title="Example">
+    ```json
+    {
+      "particles": {
+        "number": { "value": 80 },
+        "repulse": {
+          "enabled": true,
+          "distance": 100,
+          "duration": 0.4,
+          "factor": 100,
+          "speed": 1
+        },
+        "move": { "enable": true, "speed": 2 }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Combined interactions example
+
+The following configuration shows a common setup with multiple interactions active at once:
+
+```json
+{
+  "interactivity": {
+    "detectsOn": "window",
+    "events": {
+      "onHover": { "enable": true, "mode": ["grab", "bubble"] },
+      "onClick": { "enable": true, "mode": "push" }
+    },
+    "modes": {
+      "grab": {
+        "distance": 300,
+        "links": { "opacity": 0.7, "color": "#ffffff" }
+      },
+      "bubble": {
+        "distance": 200,
+        "size": 8,
+        "opacity": 1,
+        "duration": 0.3
+      },
+      "push": { "quantity": 3 }
+    }
+  },
+  "particles": {
+    "number": { "value": 80 },
+    "links": {
+      "enable": true,
+      "distance": 150,
+      "color": "#888888",
+      "opacity": 0.4,
+      "width": 1
+    },
+    "move": { "enable": true, "speed": 2 }
+  }
+}
+```
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Particle options" icon="circle-dot" href="/configuration/particles">
+    Configure particle appearance and movement.
+  </Card>
+  <Card title="Configuration options" icon="sliders" href="/configuration/options">
+    Top-level options including background and fullScreen.
+  </Card>
+</CardGroup>

@@ -1,0 +1,119 @@
+---
+title: "Introduction"
+description: "tsParticles is a lightweight, dependency-free TypeScript library for creating particle animations, confetti, fireworks, and more — compatible with React, Vue, Angular, Svelte, and any other framework."
+keywords: ["tsparticles", "particles", "animation", "canvas", "javascript", "typescript"]
+---
+
+tsParticles is a feature-rich, open-source library built on top of the HTML5 Canvas API. It lets you add animated particle effects — from simple floating dots and connected networks to full confetti bursts and fireworks displays — to any web project. The source language is TypeScript, but all distributed files are plain JavaScript, so no TypeScript tooling is required to use it.
+
+## Key features
+
+- **Dependency-free** — the engine has no runtime dependencies
+- **Browser-ready** — works via CDN `<script>` tags or as an ES module
+- **Highly configurable** — control every aspect of particle behaviour through a single JSON options object
+- **Plugin architecture** — shapes, paths, updaters, interactions, and effects are all separate packages that you load on demand
+- **Bundle system** — pre-assembled bundles let you pick a feature set without manually wiring up individual plugins
+- **Framework integrations** — official wrapper components for React, Vue 2/3, Angular, Svelte, Preact, Inferno, SolidJS, Riot.js, Astro, Ember.js, jQuery, and Web Components
+
+## The engine
+
+The `@tsparticles/engine` package is the core of tsParticles. It exposes a singleton `tsParticles` instance (available as `globalThis.tsParticles` in the browser) that manages all particle containers on the page. The engine itself ships with no built-in shapes, interactions, or updaters — these are added by loading plugins or bundles.
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+```
+
+The engine is designed to be extended. Every visual feature — circle shapes, colour updaters, mouse interactions, emitters — is implemented as an independent plugin package that registers itself with the engine.
+
+## Plugin architecture
+
+Plugins fall into several categories:
+
+| Category | Description | Example packages |
+|----------|-------------|-----------------|
+| **Shapes** | Define particle geometry | `@tsparticles/shape-circle`, `@tsparticles/shape-star` |
+| **Updaters** | Modify particle properties each frame | `@tsparticles/updater-opacity`, `@tsparticles/updater-rotate` |
+| **Interactions** | Handle pointer and particle-to-particle events | `@tsparticles/interaction-external-repulse`, `@tsparticles/interaction-particles-links` |
+| **Effects** | Render canvas-level visual effects | `@tsparticles/effect-trail`, `@tsparticles/effect-bubble` |
+| **Paths** | Control particle movement trajectories | `@tsparticles/path-perlin-noise`, `@tsparticles/path-svg` |
+| **Plugins** | Everything else — emitters, absorbers, themes, sounds | `@tsparticles/plugin-emitters`, `@tsparticles/plugin-sounds` |
+
+You load plugins by calling the `load*` function they export, passing the engine instance:
+
+```javascript
+import { tsParticles } from "@tsparticles/engine";
+import { loadCircleShape } from "@tsparticles/shape-circle";
+import { loadOpacityUpdater } from "@tsparticles/updater-opacity";
+
+await loadCircleShape(tsParticles);
+await loadOpacityUpdater(tsParticles);
+```
+
+## The bundle system
+
+Rather than assembling plugins manually, you can install a pre-built bundle. Bundles are layered by feature breadth:
+
+<CardGroup cols={2}>
+  <Card title="@tsparticles/basic" icon="circle" href="/bundles">
+    Minimum viable setup — dots moving on a canvas. Includes the engine, the Move plugin, colour plugins (hex, hsl, rgb), the Circle shape, and four updaters.
+  </Card>
+  <Card title="@tsparticles/confetti" icon="party-horn" href="/bundles">
+    Everything in Basic plus Emitters, Motion, seven shapes (cards, emoji, heart, image, polygon, square, star), and five updaters. Includes a drop-in `confetti()` function.
+  </Card>
+  <Card title="@tsparticles/slim" icon="layer-group" href="/bundles">
+    Everything in Basic plus 11 external interactions (attract, bounce, bubble, connect, grab, parallax, pause, push, remove, repulse, slow), 3 particle interactions, extra shapes, and 3 updaters.
+  </Card>
+  <Card title="@tsparticles/fireworks" icon="fire" href="/bundles">
+    Everything in Basic plus the Trail effect, Emitters, Sounds, and destruction/life updaters — all you need for fireworks animations.
+  </Card>
+  <Card title="tsparticles" icon="box" href="/bundles">
+    Everything in Slim plus Absorbers, Emitters with circle/square shapes, the Trail interaction, the Text shape, and additional updaters. This is the v1-compatible full bundle.
+  </Card>
+  <Card title="@tsparticles/all" icon="boxes-stacked" href="/bundles">
+    Everything in tsparticles plus 14 path generators, 4 effects, additional interactions, extended colour spaces (HSV, HWB, Lab, Lch, Oklab, Oklch, named), all easing functions, all emitter shapes, export plugins (image, JSON, video), and more.
+  </Card>
+</CardGroup>
+
+<Tip>
+  For most projects, `@tsparticles/slim` or the `tsparticles` full bundle is the right starting point. Use `@tsparticles/basic` when you need the smallest possible bundle, and `@tsparticles/all` only when you need advanced path generators or export functionality.
+</Tip>
+
+## Framework integrations
+
+Official wrapper packages are available for every major framework. Each wrapper accepts an `init` callback where you load your chosen bundle into the provided engine instance.
+
+<CardGroup cols={3}>
+  <Card title="React" icon="react" href="/integrations/react">
+    `@tsparticles/react`
+  </Card>
+  <Card title="Vue 2 / 3" icon="vuejs" href="/integrations/vue">
+    `@tsparticles/vue2` · `@tsparticles/vue3`
+  </Card>
+  <Card title="Angular" icon="angular" href="/integrations/angular">
+    `@tsparticles/angular`
+  </Card>
+  <Card title="Svelte" icon="code" href="/integrations/svelte">
+    `@tsparticles/svelte`
+  </Card>
+  <Card title="Astro" icon="code" href="/integrations/other">
+    `astro-particles`
+  </Card>
+  <Card title="jQuery / Web Components" icon="code" href="/integrations/other">
+    `jquery-particles` · `web-particles`
+  </Card>
+</CardGroup>
+
+## Migrating from particles.js
+
+If you have an existing particles.js configuration, the `@tsparticles/particles.js` compatibility package reads particles.js config files without any changes. Swap the script tag and you're done.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Install tsParticles and run your first animation in five minutes.
+  </Card>
+  <Card title="Bundles" icon="boxes-stacked" href="/bundles">
+    Compare all bundles and find the right one for your project.
+  </Card>
+</CardGroup>

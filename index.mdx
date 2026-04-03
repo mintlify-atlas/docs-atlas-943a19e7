@@ -1,97 +1,104 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "tsParticles"
+description: "A lightweight, dependency-free TypeScript library for creating highly customizable particle animations, confetti explosions, and fireworks — ready for React, Vue, Angular, Svelte, and more."
 ---
 
-## Setting up
+tsParticles makes it easy to add beautiful animated particle effects to any web project. Configure everything through a simple JSON options object, and choose from a rich ecosystem of shapes, paths, interactions, and presets — or build your own plugins.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Install tsParticles and launch your first particle animation in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Bundles" icon="box" href="/bundles">
+    Choose the right bundle for your project — from lightweight to feature-complete.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Framework Integrations" icon="puzzle-piece" href="/integrations/react">
+    Official components for React, Vue, Angular, Svelte, and many more frameworks.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Configuration Reference" icon="sliders" href="/configuration/options">
+    Explore every option available to customize your particle animations.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Get started in three steps
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Install a bundle">
+    Pick the bundle that fits your needs and install it via npm, yarn, or pnpm.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    ```bash
+    npm install @tsparticles/react tsparticles
+    ```
+  </Step>
+  <Step title="Initialize and configure">
+    Load the engine with your chosen bundle and pass your configuration options.
 
-## Need inspiration?
+    ```typescript
+    import { tsParticles } from "@tsparticles/engine";
+    import { loadAll } from "@tsparticles/all";
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+    await loadAll(tsParticles);
+
+    await tsParticles.load({
+      id: "tsparticles",
+      options: {
+        particles: {
+          number: { value: 80 },
+          color: { value: "#ffffff" },
+          links: { enable: true, color: "#ffffff" },
+          move: { enable: true, speed: 2 }
+        }
+      }
+    });
+    ```
+  </Step>
+  <Step title="Add the container element">
+    Add a `div` with the matching `id` to your HTML — tsParticles handles the rest.
+
+    ```html
+    <div id="tsparticles"></div>
+    ```
+  </Step>
+</Steps>
+
+## Explore by topic
+
+<CardGroup cols={2}>
+  <Card title="Confetti" icon="party-horn" href="/guides/confetti">
+    Launch confetti bursts with a single function call — canvas-confetti compatible.
+  </Card>
+  <Card title="Fireworks" icon="fire" href="/guides/fireworks">
+    Create dazzling fireworks animations with the dedicated fireworks bundle.
+  </Card>
+  <Card title="Custom Plugins" icon="wrench" href="/guides/custom-plugin">
+    Extend tsParticles with your own shapes, paths, updaters, and effects.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/engine">
+    Full API documentation for the Engine, Container, and Particle classes.
+  </Card>
+</CardGroup>
+
+## Available presets
+
+tsParticles includes a library of ready-to-use presets that you can drop in with minimal configuration:
+
+<CardGroup cols={3}>
+  <Card title="Confetti" icon="star" href="/configuration/presets">
+    Classic confetti burst from screen center
+  </Card>
+  <Card title="Fireworks" icon="fire-flame-curved" href="/configuration/presets">
+    Beautiful fireworks display
+  </Card>
+  <Card title="Snow" icon="snowflake" href="/configuration/presets">
+    Gentle falling snowflakes
+  </Card>
+  <Card title="Stars" icon="stars" href="/configuration/presets">
+    Twinkling star field
+  </Card>
+  <Card title="Bubbles" icon="circle" href="/configuration/presets">
+    Rising colored bubbles
+  </Card>
+  <Card title="Links" icon="link" href="/configuration/presets">
+    Connected particle network
+  </Card>
+</CardGroup>

@@ -1,0 +1,237 @@
+---
+title: "React integration"
+description: "Add particle animations to React applications using the @tsparticles/react component."
+keywords: ["react", "tsparticles", "particles", "animation", "component"]
+---
+
+The `@tsparticles/react` package provides a `Particles` component that wraps the tsParticles engine. You control which engine bundle to load, then pass your configuration through props.
+
+## Installation
+
+Install `@tsparticles/react` alongside the engine bundle you want to use. `@tsparticles/slim` is a good default — it includes interactions, links, and common shapes without the full feature set.
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/react @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/react @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/react @tsparticles/slim
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Swap `@tsparticles/slim` for any other bundle depending on the features you need. Use `@tsparticles/all` for the complete feature set, or `@tsparticles/basic` for the smallest possible bundle.
+</Note>
+
+## Basic usage
+
+<Steps>
+  <Step title="Create a Particles component">
+    Import `Particles` from `@tsparticles/react` and `initParticlesEngine` to bootstrap the engine. Call `initParticlesEngine` once — it loads all plugins into the shared engine instance.
+
+    ```tsx ParticlesBackground.tsx
+    import { useEffect, useState } from "react";
+    import Particles, { initParticlesEngine } from "@tsparticles/react";
+    import { loadSlim } from "@tsparticles/slim";
+    import type { ISourceOptions } from "@tsparticles/engine";
+
+    const options: ISourceOptions = {
+      background: {
+        color: { value: "#0d47a1" },
+      },
+      particles: {
+        number: { value: 80 },
+        color: { value: "#ffffff" },
+        links: {
+          enable: true,
+          color: "#ffffff",
+          distance: 150,
+          opacity: 0.4,
+        },
+        move: {
+          enable: true,
+          speed: 2,
+        },
+        opacity: { value: 0.5 },
+        size: { value: { min: 1, max: 3 } },
+      },
+      interactivity: {
+        events: {
+          onHover: { enable: true, mode: "repulse" },
+          onClick: { enable: true, mode: "push" },
+        },
+      },
+      detectRetina: true,
+    };
+
+    export function ParticlesBackground() {
+      const [engineReady, setEngineReady] = useState(false);
+
+      useEffect(() => {
+        initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        }).then(() => {
+          setEngineReady(true);
+        });
+      }, []);
+
+      if (!engineReady) return null;
+
+      return (
+        <Particles
+          id="tsparticles"
+          options={options}
+        />
+      );
+    }
+    ```
+  </Step>
+  <Step title="Use it in your app">
+    Render the component anywhere in your component tree.
+
+    ```tsx App.tsx
+    import { ParticlesBackground } from "./ParticlesBackground";
+
+    export default function App() {
+      return (
+        <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+          <ParticlesBackground />
+          <h1 style={{ position: "relative", zIndex: 1 }}>Hello, world!</h1>
+        </div>
+      );
+    }
+    ```
+  </Step>
+</Steps>
+
+## JavaScript example
+
+If you are not using TypeScript, omit the type imports and annotations.
+
+```jsx ParticlesBackground.jsx
+import { useEffect, useState } from "react";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+
+const options = {
+  background: { color: { value: "#0d47a1" } },
+  particles: {
+    number: { value: 80 },
+    color: { value: "#ffffff" },
+    links: { enable: true, color: "#ffffff" },
+    move: { enable: true, speed: 2 },
+  },
+  detectRetina: true,
+};
+
+export function ParticlesBackground() {
+  const [engineReady, setEngineReady] = useState(false);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => setEngineReady(true));
+  }, []);
+
+  if (!engineReady) return null;
+
+  return <Particles id="tsparticles" options={options} />;
+}
+```
+
+## Props reference
+
+| Prop | Type | Description |
+|---|---|---|
+| `id` | `string` | The `id` attribute of the generated canvas wrapper element. Required when rendering multiple instances on a page. |
+| `options` | `ISourceOptions` | The particles configuration object. Passed directly to the tsParticles engine. |
+| `url` | `string` | URL to a JSON configuration file. Use instead of `options` when loading config remotely. |
+| `init` | `(engine: Engine) => Promise<void>` | Deprecated in favour of `initParticlesEngine`. Callback to load plugins before the engine starts. |
+| `particlesLoaded` | `(container: Container) => Promise<void>` | Called once the particles container finishes loading. Use it to get a reference to the running container. |
+| `className` | `string` | CSS class applied to the outer wrapper element. |
+| `style` | `CSSProperties` | Inline styles applied to the outer wrapper element. |
+
+### Using `particlesLoaded`
+
+The `particlesLoaded` callback gives you access to the `Container` instance after initialization, which lets you programmatically control the animation.
+
+```tsx
+import type { Container } from "@tsparticles/engine";
+import { useCallback, useRef } from "react";
+
+function ParticlesBackground() {
+  const containerRef = useRef<Container | null>(null);
+
+  const onParticlesLoaded = useCallback(async (container: Container) => {
+    containerRef.current = container;
+  }, []);
+
+  // ... initParticlesEngine setup ...
+
+  return (
+    <Particles
+      id="tsparticles"
+      options={options}
+      particlesLoaded={onParticlesLoaded}
+    />
+  );
+}
+```
+
+## Choosing an engine bundle
+
+`initParticlesEngine` accepts a callback where you load the bundle of your choice. The three most common options are:
+
+<CardGroup cols={3}>
+  <Card title="@tsparticles/basic" icon="feather">
+    Minimal bundle: circle shapes, color, opacity, size, and movement. No interactions.
+  </Card>
+  <Card title="@tsparticles/slim" icon="bolt">
+    Recommended default. Adds interactions (hover, click), links, and several shapes on top of basic.
+  </Card>
+  <Card title="@tsparticles/all" icon="layer-group">
+    Every plugin, path generator, shape, and effect. Use when you need advanced features.
+  </Card>
+</CardGroup>
+
+```tsx
+// Basic — smallest bundle
+import { loadBasic } from "@tsparticles/basic";
+await initParticlesEngine(async (engine) => {
+  await loadBasic(engine);
+});
+
+// Slim — recommended
+import { loadSlim } from "@tsparticles/slim";
+await initParticlesEngine(async (engine) => {
+  await loadSlim(engine);
+});
+
+// All — full feature set
+import { loadAll } from "@tsparticles/all";
+await initParticlesEngine(async (engine) => {
+  await loadAll(engine);
+});
+```
+
+<Warning>
+  Call `initParticlesEngine` only once per application. The engine is a singleton — calling it multiple times in the same process will cause it to re-initialize and may reset running containers.
+</Warning>
+
+## Multiple instances
+
+When rendering multiple `Particles` components on the same page, give each a unique `id`.
+
+```tsx
+<Particles id="particles-hero" options={heroOptions} />
+<Particles id="particles-footer" options={footerOptions} />
+```

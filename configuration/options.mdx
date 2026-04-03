@@ -1,0 +1,246 @@
+---
+title: "Configuration options"
+description: "Complete reference for all top-level tsParticles configuration options defined in the IOptions interface."
+keywords: ["tsparticles", "configuration", "options", "IOptions", "autoPlay", "background", "fpsLimit", "fullScreen"]
+---
+
+Every tsParticles instance is configured through a plain JSON object. Pass it to `tsParticles.load()` under the `options` key, or load it from a URL. All properties are optional — if omitted, the default value shown below is used.
+
+```typescript
+tsParticles.load({
+  id: "tsparticles",
+  options: {
+    /* your options here */
+  },
+});
+```
+
+---
+
+## Top-level options
+
+<ParamField body="autoPlay" type="boolean" default="true">
+  Whether the animation starts automatically when the container is created. Set to `false` to start it manually by calling `container.play()`.
+</ParamField>
+
+<ParamField body="background" type="object">
+  CSS background properties applied directly to the canvas element. The canvas itself is not drawn — these values are mapped to inline styles.
+
+  <Expandable title="background properties">
+    <ParamField body="background.color" type="string | IOptionsColor">
+      Background color of the canvas. Accepts a CSS color string (e.g. `"#000000"`, `"rgb(0,0,0)"`) or a color object with a `value` key. Maps to the CSS `background-color` property.
+    </ParamField>
+
+    <ParamField body="background.image" type="string">
+      CSS `background-image` value. Use the `url()` function syntax, e.g. `"url('/images/bg.png')"`.
+    </ParamField>
+
+    <ParamField body="background.opacity" type="number" default="1">
+      Opacity applied to the background `color`. Accepts any value between `0` and `1`.
+    </ParamField>
+
+    <ParamField body="background.position" type="string">
+      CSS `background-position` value, e.g. `"center center"`.
+    </ParamField>
+
+    <ParamField body="background.repeat" type="string">
+      CSS `background-repeat` value, e.g. `"no-repeat"`.
+    </ParamField>
+
+    <ParamField body="background.size" type="string">
+      CSS `background-size` value, e.g. `"cover"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="clear" type="boolean" default="true">
+  Whether the canvas is cleared on every animation frame. Disable this to create trail effects — particles will leave a persistent painted path.
+</ParamField>
+
+<ParamField body="delay" type="number | RangeValue" default="0">
+  Initial delay in seconds before the animation starts. Accepts a single number or a min/max range object: `{ min: 0, max: 2 }`.
+</ParamField>
+
+<ParamField body="detectRetina" type="boolean" default="true">
+  Whether to detect the device pixel ratio for high-DPI (retina) screens. When disabled, the canvas always uses a ratio of `1`.
+</ParamField>
+
+<ParamField body="duration" type="number | RangeValue" default="0">
+  How long in seconds the particle animation runs before the container is automatically destroyed. A value of `0` means infinite. Accepts a single number or a range object: `{ min: 5, max: 10 }`.
+</ParamField>
+
+<ParamField body="fpsLimit" type="number" default="120">
+  Maximum frames per second cap for all particle animations. Reducing this can improve performance on lower-end devices.
+
+  <Note>When `smooth` is enabled, this value is used as the reference speed for frame-rate-independent animation scaling.</Note>
+</ParamField>
+
+<ParamField body="fullScreen" type="boolean | object" default="{ enable: false, zIndex: 0 }">
+  Expands the canvas to cover the full viewport and positions it as a fixed background. Pass `true` as a shorthand to enable with default settings.
+
+  <Expandable title="fullScreen properties">
+    <ParamField body="fullScreen.enable" type="boolean" default="false">
+      Enables full-screen mode, setting the canvas to `position: fixed` covering the entire viewport.
+    </ParamField>
+
+    <ParamField body="fullScreen.zIndex" type="number" default="0">
+      CSS `z-index` for the canvas element. Set to a negative value (e.g. `-1`) to place it behind other content. When negative, mouse interactions require `interactivity.detectsOn` set to `"window"`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="hdr" type="boolean" default="true">
+  Enables HDR (high color precision) rendering mode. When enabled, particles are rendered with greater color depth.
+</ParamField>
+
+<ParamField body="particles" type="object">
+  All particle appearance and behavior options. See [Particle options](/configuration/particles) for the full reference.
+</ParamField>
+
+<ParamField body="pauseOnBlur" type="boolean" default="true">
+  Pauses the animation when the browser window loses focus. Useful for saving CPU and battery when the user is on another tab.
+</ParamField>
+
+<ParamField body="pauseOnOutsideViewport" type="boolean" default="true">
+  Pauses the animation when the container element scrolls outside the visible viewport. Reduces unnecessary rendering when particles are not visible.
+</ParamField>
+
+<ParamField body="preset" type="string | string[]">
+  Name of one or more presets to load as a base configuration. The preset is merged before your own options, so you can override any preset value. See [Presets](/configuration/presets) for the full list.
+
+  ```json
+  { "preset": "snow" }
+  ```
+
+  ```json
+  { "preset": ["confetti", "snow"] }
+  ```
+</ParamField>
+
+<ParamField body="resize" type="object">
+  Controls how tsParticles reacts to window resize events.
+
+  <Expandable title="resize properties">
+    <ParamField body="resize.enable" type="boolean" default="true">
+      Whether to listen for window resize events and recalculate canvas dimensions and particle density.
+    </ParamField>
+
+    <ParamField body="resize.delay" type="number" default="0.5">
+      Debounce delay in seconds between resize events. Prevents excessive recalculation during continuous resizing.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="smooth" type="boolean" default="false">
+  Enables frame-rate-independent animation speed. When enabled, `fpsLimit` is used as the reference rate:
+
+  - On a 120 fps device with `fpsLimit: 60` — animation runs twice as fast.
+  - On a 60 fps device with `fpsLimit: 120` — animation runs at half speed.
+
+  <Warning>Smooth mode changes animation behavior relative to device refresh rate. Test across devices before enabling in production.</Warning>
+</ParamField>
+
+<ParamField body="style" type="object">
+  Arbitrary CSS style properties applied to the canvas element as inline styles. Accepts any valid `CSSStyleDeclaration` partial. Use for advanced visual overrides not covered by the `background` option.
+
+  ```json
+  {
+    "style": {
+      "borderRadius": "12px",
+      "boxShadow": "0 0 20px rgba(0,0,0,0.5)"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField body="zLayers" type="number" default="100">
+  Maximum number of distinct z-axis layers used for 3D-style depth effects. Particles are distributed across layers from `0` to `zLayers`.
+</ParamField>
+
+---
+
+## Complete configuration example
+
+The example below shows a typical full configuration demonstrating most top-level options alongside a particles setup.
+
+<CodeGroup>
+
+```json options.json
+{
+  "autoPlay": true,
+  "background": {
+    "color": "#0d0d0d",
+    "opacity": 1
+  },
+  "clear": true,
+  "delay": 0,
+  "detectRetina": true,
+  "duration": 0,
+  "fpsLimit": 120,
+  "fullScreen": {
+    "enable": true,
+    "zIndex": -1
+  },
+  "hdr": true,
+  "pauseOnBlur": true,
+  "pauseOnOutsideViewport": true,
+  "resize": {
+    "enable": true,
+    "delay": 0.5
+  },
+  "smooth": false,
+  "zLayers": 100,
+  "particles": {
+    "number": { "value": 80 },
+    "size": { "value": 3 },
+    "move": { "enable": true, "speed": 2 },
+    "opacity": { "value": 0.7 },
+    "shape": { "type": "circle" }
+  }
+}
+```
+
+```javascript JavaScript
+import { tsParticles } from "@tsparticles/engine";
+import { loadAll } from "@tsparticles/all";
+
+await loadAll(tsParticles);
+
+await tsParticles.load({
+  id: "tsparticles",
+  options: {
+    autoPlay: true,
+    background: { color: "#0d0d0d" },
+    detectRetina: true,
+    fpsLimit: 120,
+    fullScreen: { enable: true, zIndex: -1 },
+    pauseOnBlur: true,
+    pauseOnOutsideViewport: true,
+    particles: {
+      number: { value: 80 },
+      size: { value: 3 },
+      move: { enable: true, speed: 2 },
+      opacity: { value: 0.7 },
+      shape: { type: "circle" },
+    },
+  },
+});
+```
+
+</CodeGroup>
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Particle options" icon="circle-dot" href="/configuration/particles">
+    Configure particle appearance: number, shape, size, opacity, movement, and more.
+  </Card>
+  <Card title="Interactions" icon="hand-pointer" href="/configuration/interactions">
+    Set up mouse and particle-to-particle interactions.
+  </Card>
+  <Card title="Presets" icon="wand-magic-sparkles" href="/configuration/presets">
+    Use a ready-made preset as your starting configuration.
+  </Card>
+</CardGroup>

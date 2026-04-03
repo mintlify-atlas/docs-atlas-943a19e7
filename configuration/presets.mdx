@@ -1,0 +1,447 @@
+---
+title: "Presets"
+description: "Ready-to-use tsParticles presets — complete animation configurations you can enable with a single option. Includes bigCircles, bubbles, confetti, fire, firefly, fireworks, fountain, links, seaAnemone, snow, stars, and triangles."
+keywords: ["tsparticles", "presets", "confetti", "fireworks", "snow", "stars", "bubbles", "fire", "links"]
+---
+
+A preset is a pre-built tsParticles configuration registered under a name. You enable it by adding the `preset` key to your options object. You can then override any individual option to customize the preset further.
+
+```json
+{
+  "preset": "snow"
+}
+```
+
+Presets are distributed as separate npm packages under the `@tsparticles/preset-*` namespace. Install the preset package, load it into the engine, and reference it by name in your configuration.
+
+---
+
+## How to use a preset
+
+<Steps>
+  <Step title="Install the preset package">
+    Each preset is an independent package. Install the one you want:
+
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install @tsparticles/preset-snow
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add @tsparticles/preset-snow
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add @tsparticles/preset-snow
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Load the preset into the engine">
+    Import the loader function and call it with your tsParticles engine instance before calling `tsParticles.load()`.
+
+    ```typescript
+    import { tsParticles } from "@tsparticles/engine";
+    import { loadSnowPreset } from "@tsparticles/preset-snow";
+
+    await loadSnowPreset(tsParticles);
+    ```
+  </Step>
+  <Step title="Reference the preset by name">
+    Add the `preset` key to your configuration object. The preset name matches the package suffix, in camelCase.
+
+    ```typescript
+    await tsParticles.load({
+      id: "tsparticles",
+      options: {
+        preset: "snow",
+      },
+    });
+    ```
+  </Step>
+  <Step title="Override preset options (optional)">
+    Any option you provide alongside `preset` overwrites the preset's defaults. This lets you customize without writing a full configuration from scratch.
+
+    ```json
+    {
+      "preset": "snow",
+      "background": { "color": "#1a1a2e" },
+      "particles": {
+        "number": { "value": 400 }
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Using multiple presets
+
+The `preset` field accepts a string or an array of strings. When an array is provided, presets are applied in order, each one merged on top of the previous.
+
+```json
+{
+  "preset": ["stars", "snow"]
+}
+```
+
+<Note>
+  Later presets in the array override earlier ones if they set the same options. Apply the most specific preset last.
+</Note>
+
+---
+
+## Available presets
+
+### Big Circles
+
+**Package:** `@tsparticles/preset-big-circles`  
+**Preset name:** `"bigCircles"`
+
+Large, colored circles drifting upward against a white background. Useful for decorative hero sections.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-big-circles
+```
+
+```typescript load
+import { loadBigCirclesPreset } from "@tsparticles/preset-big-circles";
+await loadBigCirclesPreset(tsParticles);
+```
+
+```json use
+{ "preset": "bigCircles" }
+```
+
+</CodeGroup>
+
+---
+
+### Bubbles
+
+**Package:** `@tsparticles/preset-bubbles`  
+**Preset name:** `"bubbles"`
+
+Colored bubbles rising from the bottom of the screen, fading out as they ascend. Good for light, airy backgrounds.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-bubbles
+```
+
+```typescript load
+import { loadBubblesPreset } from "@tsparticles/preset-bubbles";
+await loadBubblesPreset(tsParticles);
+```
+
+```json use
+{ "preset": "bubbles" }
+```
+
+</CodeGroup>
+
+---
+
+### Confetti
+
+**Package:** `@tsparticles/preset-confetti`  
+**Preset name:** `"confetti"`
+
+White and red confetti pieces launched from the center of the screen on a transparent background. Classic celebration effect.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-confetti
+```
+
+```typescript load
+import { loadConfettiPreset } from "@tsparticles/preset-confetti";
+await loadConfettiPreset(tsParticles);
+```
+
+```json use
+{ "preset": "confetti" }
+```
+
+</CodeGroup>
+
+<Tip>
+  For a standalone confetti API without the full tsParticles setup, see the `@tsparticles/confetti` package, which is canvas-confetti API compatible.
+</Tip>
+
+---
+
+### Fire
+
+**Package:** `@tsparticles/preset-fire`  
+**Preset name:** `"fire"`
+
+Particles styled like fire and ash sparks rising against a dark red-to-black gradient background. Ideal for dramatic effects.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-fire
+```
+
+```typescript load
+import { loadFirePreset } from "@tsparticles/preset-fire";
+await loadFirePreset(tsParticles);
+```
+
+```json use
+{ "preset": "fire" }
+```
+
+</CodeGroup>
+
+---
+
+### Firefly
+
+**Package:** `@tsparticles/preset-firefly`  
+**Preset name:** `"firefly"`
+
+Small glowing particles that trail behind the mouse cursor, fading out quickly. Resembles fireflies following the pointer.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-firefly
+```
+
+```typescript load
+import { loadFireflyPreset } from "@tsparticles/preset-firefly";
+await loadFireflyPreset(tsParticles);
+```
+
+```json use
+{ "preset": "firefly" }
+```
+
+</CodeGroup>
+
+---
+
+### Fireworks
+
+**Package:** `@tsparticles/preset-fireworks`  
+**Preset name:** `"fireworks"`
+
+A full fireworks display with rockets launching and exploding into colorful bursts. One of the most visually complex presets.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-fireworks
+```
+
+```typescript load
+import { loadFireworksPreset } from "@tsparticles/preset-fireworks";
+await loadFireworksPreset(tsParticles);
+```
+
+```json use
+{ "preset": "fireworks" }
+```
+
+</CodeGroup>
+
+---
+
+### Fountain
+
+**Package:** `@tsparticles/preset-fountain`  
+**Preset name:** `"fountain"`
+
+Particles emitted upward from a central point, arcing outward and falling back down under simulated gravity, resembling a fountain.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-fountain
+```
+
+```typescript load
+import { loadFountainPreset } from "@tsparticles/preset-fountain";
+await loadFountainPreset(tsParticles);
+```
+
+```json use
+{ "preset": "fountain" }
+```
+
+</CodeGroup>
+
+---
+
+### Links
+
+**Package:** `@tsparticles/preset-links`  
+**Preset name:** `"links"`
+
+The classic connected particle network: moving dots joined by lines when close enough. The most commonly recognized tsParticles effect.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-links
+```
+
+```typescript load
+import { loadLinksPreset } from "@tsparticles/preset-links";
+await loadLinksPreset(tsParticles);
+```
+
+```json use
+{ "preset": "links" }
+```
+
+</CodeGroup>
+
+---
+
+### Sea Anemone
+
+**Package:** `@tsparticles/preset-sea-anemone`  
+**Preset name:** `"seaAnemone"`
+
+Particles flowing in a wave-like motion that resembles the tentacles of a sea anemone. Organic and fluid.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-sea-anemone
+```
+
+```typescript load
+import { loadSeaAnemonePreset } from "@tsparticles/preset-sea-anemone";
+await loadSeaAnemonePreset(tsParticles);
+```
+
+```json use
+{ "preset": "seaAnemone" }
+```
+
+</CodeGroup>
+
+---
+
+### Snow
+
+**Package:** `@tsparticles/preset-snow`  
+**Preset name:** `"snow"`
+
+Small white particles drifting downward with slight horizontal drift, simulating a snowfall. Suitable for winter-themed pages.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-snow
+```
+
+```typescript load
+import { loadSnowPreset } from "@tsparticles/preset-snow";
+await loadSnowPreset(tsParticles);
+```
+
+```json use
+{ "preset": "snow" }
+```
+
+</CodeGroup>
+
+---
+
+### Stars
+
+**Package:** `@tsparticles/preset-stars`  
+**Preset name:** `"stars"`
+
+A twinkling star field with particles of varying size and opacity that slowly pulse. Works well as a dark-mode background.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-stars
+```
+
+```typescript load
+import { loadStarsPreset } from "@tsparticles/preset-stars";
+await loadStarsPreset(tsParticles);
+```
+
+```json use
+{ "preset": "stars" }
+```
+
+</CodeGroup>
+
+---
+
+### Triangles
+
+**Package:** `@tsparticles/preset-triangles`  
+**Preset name:** `"triangles"`
+
+A linked particle network similar to `links`, but the triangular areas formed between three connected particles are filled with a semi-transparent color.
+
+<CodeGroup>
+
+```bash install
+npm install @tsparticles/preset-triangles
+```
+
+```typescript load
+import { loadTrianglesPreset } from "@tsparticles/preset-triangles";
+await loadTrianglesPreset(tsParticles);
+```
+
+```json use
+{ "preset": "triangles" }
+```
+
+</CodeGroup>
+
+---
+
+## Preset quick-reference
+
+| Preset name | Package | Description |
+|---|---|---|
+| `bigCircles` | `@tsparticles/preset-big-circles` | Large colored circles moving upward |
+| `bubbles` | `@tsparticles/preset-bubbles` | Colored bubbles rising from the bottom |
+| `confetti` | `@tsparticles/preset-confetti` | Confetti burst from screen center |
+| `fire` | `@tsparticles/preset-fire` | Fire and ash sparks on a dark background |
+| `firefly` | `@tsparticles/preset-firefly` | Mouse-trailing glowing particles |
+| `fireworks` | `@tsparticles/preset-fireworks` | Full fireworks display |
+| `fountain` | `@tsparticles/preset-fountain` | Gravity-affected fountain from center |
+| `links` | `@tsparticles/preset-links` | Classic connected particle network |
+| `seaAnemone` | `@tsparticles/preset-sea-anemone` | Flowing wave-like particle motion |
+| `snow` | `@tsparticles/preset-snow` | Gently falling snowflakes |
+| `stars` | `@tsparticles/preset-stars` | Twinkling star field |
+| `triangles` | `@tsparticles/preset-triangles` | Particle network with filled triangles |
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Configuration options" icon="sliders" href="/configuration/options">
+    Top-level options including the `preset` field reference.
+  </Card>
+  <Card title="Particle options" icon="circle-dot" href="/configuration/particles">
+    Override preset particle settings with your own values.
+  </Card>
+  <Card title="Interactions" icon="hand-pointer" href="/configuration/interactions">
+    Add mouse interactions on top of any preset.
+  </Card>
+</CardGroup>

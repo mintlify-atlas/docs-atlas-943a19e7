@@ -1,0 +1,190 @@
+---
+title: "Angular integration"
+description: "Add particle animations to Angular applications using the @tsparticles/angular component."
+keywords: ["angular", "tsparticles", "particles", "animation", "directive", "module"]
+---
+
+The `@tsparticles/angular` package provides a `NgParticlesModule` that exposes a `<ng-particles>` component you can use in any Angular template.
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/angular @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/angular @tsparticles/slim
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/angular @tsparticles/slim
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Replace `@tsparticles/slim` with any other bundle based on the features you need. Use `@tsparticles/basic` for the smallest bundle or `@tsparticles/all` for the full feature set.
+</Note>
+
+## Module setup
+
+<Steps>
+  <Step title="Import NgParticlesModule">
+    Add `NgParticlesModule` to the `imports` array of your `AppModule` (or any feature module where you want to use particles).
+
+    ```typescript app.module.ts
+    import { NgModule } from "@angular/core";
+    import { BrowserModule } from "@angular/platform-browser";
+    import { NgParticlesModule } from "@tsparticles/angular";
+
+    import { AppComponent } from "./app.component";
+
+    @NgModule({
+      declarations: [AppComponent],
+      imports: [BrowserModule, NgParticlesModule],
+      bootstrap: [AppComponent],
+    })
+    export class AppModule {}
+    ```
+  </Step>
+  <Step title="Initialize the engine in your component">
+    Call `initParticlesEngine` in your component's constructor or `ngOnInit`. The engine is a singleton, so call it only once — typically in the root component.
+
+    ```typescript app.component.ts
+    import { Component, OnInit } from "@angular/core";
+    import { initParticlesEngine } from "@tsparticles/angular";
+    import { loadSlim } from "@tsparticles/slim";
+    import type { Container, ISourceOptions } from "@tsparticles/engine";
+
+    @Component({
+      selector: "app-root",
+      templateUrl: "./app.component.html",
+    })
+    export class AppComponent implements OnInit {
+      engineReady = false;
+
+      particlesOptions: ISourceOptions = {
+        background: {
+          color: { value: "#0d47a1" },
+        },
+        particles: {
+          number: { value: 80 },
+          color: { value: "#ffffff" },
+          links: {
+            enable: true,
+            color: "#ffffff",
+            distance: 150,
+          },
+          move: {
+            enable: true,
+            speed: 2,
+          },
+          opacity: { value: 0.5 },
+          size: { value: { min: 1, max: 3 } },
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: "repulse" },
+            onClick: { enable: true, mode: "push" },
+          },
+        },
+        detectRetina: true,
+      };
+
+      async ngOnInit(): Promise<void> {
+        await initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        });
+
+        this.engineReady = true;
+      }
+
+      particlesLoaded(container: Container): void {
+        console.log("Particles loaded", container);
+      }
+    }
+    ```
+  </Step>
+  <Step title="Add the component to your template">
+    Use `<ng-particles>` in your template. Bind `[options]` to your configuration object and `(particlesLoaded)` to your callback.
+
+    ```html app.component.html
+    <ng-particles
+      *ngIf="engineReady"
+      id="tsparticles"
+      [options]="particlesOptions"
+      (particlesLoaded)="particlesLoaded($event)"
+    ></ng-particles>
+    ```
+  </Step>
+</Steps>
+
+## Standalone component setup
+
+If your Angular project uses standalone components (Angular 14+), import `NgParticlesModule` directly in the `imports` array of your standalone component.
+
+```typescript app.component.ts
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { NgParticlesModule, initParticlesEngine } from "@tsparticles/angular";
+import { loadSlim } from "@tsparticles/slim";
+import type { ISourceOptions } from "@tsparticles/engine";
+
+@Component({
+  selector: "app-root",
+  standalone: true,
+  imports: [CommonModule, NgParticlesModule],
+  template: `
+    <ng-particles
+      *ngIf="engineReady"
+      id="tsparticles"
+      [options]="particlesOptions"
+    ></ng-particles>
+  `,
+})
+export class AppComponent implements OnInit {
+  engineReady = false;
+
+  particlesOptions: ISourceOptions = {
+    particles: {
+      number: { value: 60 },
+      move: { enable: true, speed: 2 },
+      color: { value: "#ffffff" },
+    },
+  };
+
+  async ngOnInit(): Promise<void> {
+    await initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    });
+    this.engineReady = true;
+  }
+}
+```
+
+## Component inputs and outputs
+
+| Name | Type | Description |
+|---|---|---|
+| `[id]` | `string` | Sets the `id` on the canvas wrapper element. Required when using multiple instances on one page. |
+| `[options]` | `ISourceOptions` | The particles configuration object. |
+| `[url]` | `string` | URL to a remote JSON configuration file. An alternative to `[options]`. |
+| `(particlesLoaded)` | `EventEmitter<Container>` | Emitted once the particles container finishes loading. The `Container` instance is passed to your handler. |
+
+## Choosing an engine bundle
+
+Replace `loadSlim` with any bundle loader in the `initParticlesEngine` call.
+
+```typescript
+import { loadBasic } from "@tsparticles/basic"; // Minimal — no interactions
+import { loadSlim } from "@tsparticles/slim";   // Recommended default
+import { loadAll } from "@tsparticles/all";     // Full feature set
+```
+
+<Warning>
+  Guard the `<ng-particles>` element with `*ngIf="engineReady"` (or the equivalent control flow). The component must not render before `initParticlesEngine` resolves, or the engine will not have loaded its plugins yet.
+</Warning>

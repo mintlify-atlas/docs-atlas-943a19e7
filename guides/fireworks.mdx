@@ -1,0 +1,248 @@
+---
+title: "Fireworks animations"
+description: "Add a fireworks display to any page using the @tsparticles/fireworks bundle."
+keywords: ["fireworks", "tsparticles", "animation", "particles"]
+---
+
+The `@tsparticles/fireworks` bundle provides a `fireworks()` function that launches a full-screen fireworks display with sound effects and realistic physics. Rockets rise from the bottom of the viewport, explode into coloured trails, and fade away — all driven by the tsParticles engine.
+
+The bundle builds on `@tsparticles/basic` and adds the trail effect, emitter system, sounds plugin, and the destroy/life/rotate updaters that produce the characteristic fireworks burst behaviour.
+
+## Installation
+
+<Tabs>
+  <Tab title="CDN">
+    Include the self-contained bundle. All dependencies are bundled into a single file.
+
+    ```html
+    <script src="https://cdn.jsdelivr.net/npm/@tsparticles/fireworks@latest/tsparticles.fireworks.bundle.min.js"></script>
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/fireworks
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/fireworks
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/fireworks
+    ```
+  </Tab>
+</Tabs>
+
+### Module import
+
+```typescript
+import { fireworks } from "@tsparticles/fireworks";
+```
+
+## Basic usage
+
+The simplest call starts a continuous fireworks display covering the full viewport.
+
+```javascript
+fireworks();
+```
+
+Always `await` the call in async contexts — the function returns a `Promise` that resolves to a `FireworksInstance`.
+
+```javascript
+(async () => {
+  await fireworks();
+})();
+```
+
+## Function signature
+
+```typescript
+function fireworks(
+  idOrOptions?: string | RecursivePartial<IFireworkOptions>,
+  sourceOptions?: RecursivePartial<IFireworkOptions>,
+): Promise<FireworksInstance | undefined>
+```
+
+The first parameter is either:
+
+- An **id string** identifying the canvas element. Pass options as the second argument.
+- An **options object** directly, in which case the id defaults to `"fireworks"`.
+- Omitted entirely to use all defaults.
+
+### Static methods
+
+| Method | Description |
+|--------|-------------|
+| `fireworks.create(canvas, options?)` | Returns a `FireworksInstance` bound to a specific `HTMLCanvasElement` rather than a full-screen canvas. |
+| `fireworks.init()` | Pre-initialises plugins without starting the animation. |
+| `fireworks.version` | The package version string. |
+
+## FireworksInstance
+
+`fireworks()` resolves to a `FireworksInstance` that wraps the underlying tsParticles `Container`.
+
+```typescript
+class FireworksInstance {
+  pause(): void;
+  play(): void;
+  stop(): void;
+}
+```
+
+Use these methods to control playback after the animation has started.
+
+```javascript
+const fw = await fireworks();
+
+// pause after 5 seconds
+setTimeout(() => fw.pause(), 5000);
+
+// resume
+setTimeout(() => fw.play(), 8000);
+
+// stop and clean up
+setTimeout(() => fw.stop(), 10000);
+```
+
+## Options reference
+
+All options are optional. When omitted, the defaults produce a colourful fireworks display at a moderate rate.
+
+<ParamField body="background" type="string" default='"none"'>
+  Background colour of the canvas. Accepts any valid CSS colour value, including `"transparent"` and `"none"` (no background, so the page beneath shows through).
+</ParamField>
+
+<ParamField body="colors" type="string | string[]" default='["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93"]'>
+  Colours for the burst particles. Accepts a single hex string or an array.
+</ParamField>
+
+<ParamField body="brightness" type="number | { min: number; max: number }" default='{ min: -30, max: 30 }'>
+  Lightness offset (in HSL) applied to each burst particle colour. Range is −100 to 100. Pass a single number for a fixed offset or a range object for randomised variation.
+</ParamField>
+
+<ParamField body="saturation" type="number | { min: number; max: number }" default='{ min: -30, max: 30 }'>
+  Saturation offset (in HSL) applied to each burst particle colour. Range is −100 to 100.
+</ParamField>
+
+<ParamField body="gravity" type="number | { min: number; max: number }" default="5">
+  Gravitational acceleration applied to burst particles after the explosion. Higher values pull pieces down faster.
+</ParamField>
+
+<ParamField body="minHeight" type="number | { min: number; max: number }" default='{ min: 10, max: 30 }'>
+  Minimum viewport height (as a percentage from the top) at which rockets explode. Lower values mean rockets travel higher before bursting.
+</ParamField>
+
+<ParamField body="rate" type="number | { min: number; max: number }" default="10">
+  Rockets launched per second. Pass a range to randomise the rate between bursts.
+</ParamField>
+
+<ParamField body="speed" type="number | { min: number; max: number }" default='{ min: 5, max: 15 }'>
+  Speed of burst particles immediately after explosion.
+</ParamField>
+
+<ParamField body="splitCount" type="number | { min: number; max: number }" default='{ min: 75, max: 150 }'>
+  Number of particles each rocket splits into when it explodes.
+</ParamField>
+
+<ParamField body="sounds" type="boolean" default="true">
+  Plays explosion sound effects when rockets burst. Sounds are loaded from `particles.js.org`. Disable this in environments where audio is not appropriate.
+</ParamField>
+
+<Note>
+  Range options (`{ min: number; max: number }`) let tsParticles pick a random value within the range for each rocket or burst particle, which produces natural variation. Passing a plain number fixes the value for all particles.
+</Note>
+
+## Examples
+
+### Basic display
+
+```javascript
+const fw = await fireworks();
+```
+
+### Silent display with custom colours
+
+```javascript
+const fw = await fireworks({
+  sounds: false,
+  colors: ["#e63946", "#457b9d", "#f4a261"],
+});
+```
+
+### Slow, dramatic bursts
+
+```javascript
+const fw = await fireworks({
+  rate: 2,
+  splitCount: { min: 100, max: 200 },
+  gravity: 3,
+  speed: { min: 8, max: 20 },
+  minHeight: { min: 5, max: 20 },
+  sounds: false,
+});
+```
+
+### Bound to a specific canvas
+
+```javascript
+const canvas = document.getElementById("fireworks-canvas");
+const fw = await fireworks.create(canvas, {
+  colors: ["#ff595e", "#ffca3a", "#8ac926"],
+  sounds: false,
+});
+```
+
+### Named instance
+
+Use an id string to control a specific instance independently:
+
+```javascript
+const fw = await fireworks("main-display", {
+  rate: 5,
+  colors: ["#ffffff", "#aaaaaa"],
+  sounds: false,
+});
+
+document.getElementById("pause-btn").addEventListener("click", () => fw.pause());
+document.getElementById("play-btn").addEventListener("click", () => fw.play());
+```
+
+### Temporary display
+
+```javascript
+const fw = await fireworks({ sounds: false });
+
+// stop after 10 seconds
+setTimeout(() => fw.stop(), 10_000);
+```
+
+## How it works
+
+Each rocket is an emitter particle that travels upward. When it reaches its minimum height, the destroy updater triggers a **split** that spawns the burst particles. Each burst particle:
+
+- Has a random colour from `colors` with `brightness` and `saturation` offsets applied.
+- Renders a short trail effect via `@tsparticles/effect-trail`.
+- Fades out using opacity animation controlled by `@tsparticles/updater-life`.
+- Decays in speed over time using the `decay` move option.
+
+## Included packages
+
+The bundle automatically loads the following packages.
+
+<AccordionGroup>
+  <Accordion title="Core">
+    `@tsparticles/engine`, `@tsparticles/basic`
+  </Accordion>
+  <Accordion title="Effects">
+    `@tsparticles/effect-trail` — renders the trailing streak behind rockets and burst particles.
+  </Accordion>
+  <Accordion title="Plugins">
+    `@tsparticles/plugin-emitters`, `@tsparticles/plugin-emitters-shape-square`, `@tsparticles/plugin-sounds`
+  </Accordion>
+  <Accordion title="Updaters">
+    `@tsparticles/updater-destroy`, `@tsparticles/updater-life`, `@tsparticles/updater-rotate`
+  </Accordion>
+</AccordionGroup>

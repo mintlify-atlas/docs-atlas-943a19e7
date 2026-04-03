@@ -1,0 +1,669 @@
+---
+title: "Particle Effects & Updaters"
+description: "Canvas-level visual effects (bubble, trail, shadow, filter, particles) and per-frame particle updaters (opacity, size, rotate, tilt, wobble, orbit, life, and more) for tsParticles."
+keywords: ["tsparticles", "effects", "updaters", "IEffectDrawer", "IParticleUpdater", "bubble", "trail", "shadow", "opacity", "rotate", "orbit", "life", "twinkle", "wobble"]
+---
+
+tsParticles separates visual features into two distinct systems that both run every animation frame:
+
+- **Effects** implement `IEffectDrawer` and add canvas-level rendering — shadow blurs, trailing lines, bubble highlights, CSS filter functions, and more. They wrap the particle's shape draw call via `drawBefore` and `drawAfter`.
+- **Updaters** implement `IParticleUpdater` and modify particle state — opacity, size, rotation angle, color, lifetime, orbit position, and so on. They run `update()` every frame and can also contribute color styles and canvas transform values.
+
+## Effects
+
+### bubble
+
+**Package:** `@tsparticles/effect-bubble` · **Function:** `loadBubbleEffect` · **Effect name:** `"bubble"`
+
+Adds a white highlight arc in the upper-left of each particle after the shape is drawn, giving a soap-bubble or glass-ball appearance.
+
+```typescript
+import { loadBubbleEffect } from "@tsparticles/effect-bubble";
+await loadBubbleEffect(engine);
+```
+
+```json
+{
+  "particles": {
+    "shape": { "type": "circle" },
+    "effect": {
+      "type": "bubble"
+    }
+  }
+}
+```
+
+The bubble is drawn by `BubbleDrawer.drawAfter`, which places a filled arc at `radius / 3` offset from the particle center. No per-particle configuration is required.
+
+---
+
+### trail
+
+**Package:** `@tsparticles/effect-trail` · **Function:** `loadTrailEffect` · **Effect name:** `"trail"`
+
+Renders a fading trail behind each particle. The trail is drawn into the canvas using the particle's current position history, creating a motion-blur comet effect.
+
+```typescript
+import { loadTrailEffect } from "@tsparticles/effect-trail";
+await loadTrailEffect(engine);
+```
+
+```json
+{
+  "particles": {
+    "effect": {
+      "type": "trail",
+      "options": {
+        "trail": {
+          "length": 20,
+          "minWidth": 1
+        }
+      }
+    }
+  }
+}
+```
+
+<Note>
+  The `@tsparticles/fireworks` bundle includes the trail effect by default. If you are building a fireworks animation from scratch, install `@tsparticles/effect-trail` alongside the emitters plugin.
+</Note>
+
+---
+
+### shadow
+
+**Package:** `@tsparticles/effect-shadow` · **Function:** `loadShadowEffect` · **Effect name:** `"shadow"`
+
+Applies a canvas `shadowBlur` / `shadowColor` / `shadowOffset` to each particle before drawing. The shadow color, blur radius, and x/y offset are configurable per particle.
+
+```typescript
+import { loadShadowEffect } from "@tsparticles/effect-shadow";
+await loadShadowEffect(engine);
+```
+
+```json
+{
+  "particles": {
+    "effect": {
+      "type": "shadow",
+      "options": {
+        "shadow": {
+          "color": { "value": "#ff0000" },
+          "blur": 10,
+          "offset": { "x": 0, "y": 0 }
+        }
+      }
+    }
+  }
+}
+```
+
+The `ShadowDrawer` saves and restores the canvas context around each particle draw call, setting `context.shadowBlur`, `context.shadowColor`, `context.shadowOffsetX`, and `context.shadowOffsetY`.
+
+---
+
+### filter
+
+**Package:** `@tsparticles/effect-filter` · **Function:** `loadFilterEffect` · **Effect name:** `"filter"`
+
+Applies a CSS `filter()` function to each particle using the canvas context's `filter` property. All standard CSS filter functions are supported.
+
+```typescript
+import { loadFilterEffect } from "@tsparticles/effect-filter";
+await loadFilterEffect(engine);
+```
+
+```json
+{
+  "particles": {
+    "effect": {
+      "type": "filter",
+      "options": {
+        "filter": {
+          "blur": 2,
+          "brightness": 1.2,
+          "contrast": 1,
+          "grayscale": 0,
+          "hueRotate": 0,
+          "invert": 0,
+          "opacity": 1,
+          "saturate": 1,
+          "sepia": 0,
+          "dropShadow": "0 0 4px #fff",
+          "url": ""
+        }
+      }
+    }
+  }
+}
+```
+
+The `IFilterData` interface:
+
+```typescript
+export interface IFilterData extends IShapeValues {
+  blur?: number | string;
+  brightness?: number;
+  contrast?: number;
+  dropShadow?: string;
+  grayscale?: number;
+  hueRotate?: number | string;
+  invert?: number;
+  opacity?: number;
+  saturate?: number;
+  sepia?: number;
+  url?: string;
+}
+```
+
+---
+
+### particles
+
+**Package:** `@tsparticles/effect-particles` · **Function:** `loadParticlesEffect` · **Effect name:** `"particles"`
+
+Renders an additional layer of smaller sub-particles inside or around each main particle. Useful for multi-level or nested particle effects.
+
+```typescript
+import { loadParticlesEffect } from "@tsparticles/effect-particles";
+await loadParticlesEffect(engine);
+```
+
+```json
+{
+  "particles": {
+    "effect": {
+      "type": "particles"
+    }
+  }
+}
+```
+
+---
+
+## How effects interact with the rendering pipeline
+
+The canvas rendering sequence for each particle is:
+
+<Steps>
+  <Step title="effect.drawBefore">
+    The effect drawer's `drawBefore` method runs. This is where shadow effects save the canvas context and set `context.shadowBlur` / `context.shadowColor`.
+  </Step>
+  <Step title="Shape draw">
+    The shape drawer's `draw` method renders the particle geometry into the canvas context.
+  </Step>
+  <Step title="effect.drawAfter">
+    The effect drawer's `drawAfter` method runs. This is where the bubble highlight arc is added on top of the shape.
+  </Step>
+</Steps>
+
+Effects are selected via `particles.effect.type`. Per-particle effect data is stored under `particles.effect.options.<effectName>` and is accessible in the drawer via `particle.effectData`.
+
+---
+
+## Particle updaters
+
+Updaters implement `IParticleUpdater` and run every frame. Each updater is registered under a key name and applies to all particles in a container. Most updaters read per-particle options from the configuration block that matches their feature area.
+
+### opacity
+
+**Package:** `@tsparticles/updater-opacity` · **Function:** `loadOpacityUpdater` · **Key:** `"opacity"`
+
+Animates particle opacity over time. Reads `particles.opacity.animation` to drive a looping or one-shot fade.
+
+```typescript
+import { loadOpacityUpdater } from "@tsparticles/updater-opacity";
+await loadOpacityUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "opacity": {
+      "value": { "min": 0.1, "max": 1 },
+      "animation": {
+        "enable": true,
+        "speed": 1,
+        "sync": false
+      }
+    }
+  }
+}
+```
+
+---
+
+### size
+
+**Package:** `@tsparticles/updater-size` · **Function:** `loadSizeUpdater` · **Key:** `"size"`
+
+Animates particle radius over time. Reads `particles.size.animation`.
+
+```typescript
+import { loadSizeUpdater } from "@tsparticles/updater-size";
+await loadSizeUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "size": {
+      "value": { "min": 1, "max": 8 },
+      "animation": {
+        "enable": true,
+        "speed": 3,
+        "sync": false
+      }
+    }
+  }
+}
+```
+
+---
+
+### rotate
+
+**Package:** `@tsparticles/updater-rotate` · **Function:** `loadRotateUpdater` · **Key:** `"rotate"`
+
+Rotates each particle around its centre. Supports random initial angle, animated rotation speed, and direction (clockwise / counter-clockwise / random).
+
+```typescript
+import { loadRotateUpdater } from "@tsparticles/updater-rotate";
+await loadRotateUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "rotate": {
+      "value": { "min": 0, "max": 360 },
+      "direction": "clockwise",
+      "animation": {
+        "enable": true,
+        "speed": 5,
+        "sync": false
+      }
+    }
+  }
+}
+```
+
+---
+
+### tilt
+
+**Package:** `@tsparticles/updater-tilt` · **Function:** `loadTiltUpdater` · **Key:** `"tilt"`
+
+Applies a perspective tilt transform to particles, creating a 3D coin-flip appearance. Configurable tilt angle, direction, and animation.
+
+```typescript
+import { loadTiltUpdater } from "@tsparticles/updater-tilt";
+await loadTiltUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "tilt": {
+      "enable": true,
+      "value": { "min": 0, "max": 360 },
+      "direction": "clockwise",
+      "animation": {
+        "enable": true,
+        "speed": 5,
+        "sync": false
+      }
+    }
+  }
+}
+```
+
+---
+
+### wobble
+
+**Package:** `@tsparticles/updater-wobble` · **Function:** `loadWobbleUpdater` · **Key:** `"wobble"`
+
+Adds a sinusoidal wobble (side-to-side oscillation) to particle movement. Configurable speed, distance, and direction.
+
+```typescript
+import { loadWobbleUpdater } from "@tsparticles/updater-wobble";
+await loadWobbleUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "wobble": {
+      "enable": true,
+      "distance": 10,
+      "speed": { "angle": 50, "move": 10 }
+    }
+  }
+}
+```
+
+---
+
+### roll
+
+**Package:** `@tsparticles/updater-roll` · **Function:** `loadRollUpdater` · **Key:** `"roll"`
+
+Simulates a rolling motion — the particle appears to roll across the canvas like a ball, combining rotation with movement so the rotation speed is proportional to the translation speed.
+
+```typescript
+import { loadRollUpdater } from "@tsparticles/updater-roll";
+await loadRollUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "roll": {
+      "enable": true,
+      "darken": {
+        "enable": true,
+        "value": 25
+      },
+      "enlighten": {
+        "enable": false,
+        "value": 25
+      },
+      "speed": 25
+    }
+  }
+}
+```
+
+---
+
+### orbit
+
+**Package:** `@tsparticles/updater-orbit` · **Function:** `loadOrbitUpdater` · **Key:** `"orbit"`
+
+Draws an orbital ring around each particle and optionally moves the particle along its own orbit path. The orbit color, width, opacity, and radius are all configurable.
+
+```typescript
+import { loadOrbitUpdater } from "@tsparticles/updater-orbit";
+await loadOrbitUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "orbit": {
+      "enable": true,
+      "color": { "value": "#ffffff" },
+      "opacity": 0.5,
+      "width": 1,
+      "radius": 8,
+      "animation": {
+        "enable": true,
+        "speed": 1,
+        "count": 1
+      }
+    }
+  }
+}
+```
+
+---
+
+### twinkle
+
+**Package:** `@tsparticles/updater-twinkle` · **Function:** `loadTwinkleUpdater` · **Key:** `"twinkle"`
+
+Makes particles randomly flash to a different color and opacity for a brief moment, producing a star-twinkle effect.
+
+```typescript
+import { loadTwinkleUpdater } from "@tsparticles/updater-twinkle";
+await loadTwinkleUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "twinkle": {
+      "particles": {
+        "enable": true,
+        "color": { "value": "#ffffff" },
+        "frequency": 0.05,
+        "opacity": 1
+      },
+      "lines": {
+        "enable": true,
+        "color": { "value": "#ffffff" },
+        "frequency": 0.005,
+        "opacity": 1
+      }
+    }
+  }
+}
+```
+
+---
+
+### life
+
+**Package:** `@tsparticles/updater-life` · **Function:** `loadLifeUpdater` · **Key:** `"life"`
+
+Manages particle lifetime — each particle lives for a configurable duration, then is destroyed and optionally re-spawned a fixed number of times. Supports a spawn delay and `sync` to align lifetimes across particles.
+
+```typescript
+import { loadLifeUpdater } from "@tsparticles/updater-life";
+await loadLifeUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "life": {
+      "count": 3,
+      "delay": {
+        "value": 0.1,
+        "sync": false
+      },
+      "duration": {
+        "value": { "min": 1, "max": 3 },
+        "sync": false
+      }
+    }
+  }
+}
+```
+
+Setting `count` to `0` gives particles infinite lives. Setting `duration.value` to `0` or less makes them live indefinitely.
+
+---
+
+### gradient
+
+**Package:** `@tsparticles/updater-gradient` · **Function:** `loadGradientUpdater` · **Key:** `"gradient"`
+
+Animates a color gradient across the particle — either radial or linear. The gradient angle and color stops are configurable, and the angle can be animated.
+
+```typescript
+import { loadGradientUpdater } from "@tsparticles/updater-gradient";
+await loadGradientUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "gradient": [
+      {
+        "type": "radial",
+        "radius": 1,
+        "stops": [
+          { "value": 0, "color": { "value": "#ff0000" } },
+          { "value": 1, "color": { "value": "#0000ff" } }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+### fill-color (color)
+
+**Package:** `@tsparticles/updater-fill-color` · **Function:** `loadFillColorUpdater` · **Key:** `"color"`
+
+Animates the particle fill color over time. Reads `particles.color.animation` to drive hue, saturation, or value rotation.
+
+```typescript
+import { loadFillColorUpdater } from "@tsparticles/updater-fill-color";
+await loadFillColorUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "color": {
+      "value": "#ff0000",
+      "animation": {
+        "h": { "enable": true, "speed": 20 },
+        "s": { "enable": false },
+        "l": { "enable": false }
+      }
+    }
+  }
+}
+```
+
+---
+
+### stroke-color
+
+**Package:** `@tsparticles/updater-stroke-color` · **Function:** `loadStrokeColorUpdater` · **Key:** `"strokeColor"`
+
+Animates the particle stroke (outline) color independently of the fill color. Mirrors the fill-color updater interface but applies to `particles.stroke.color`.
+
+```typescript
+import { loadStrokeColorUpdater } from "@tsparticles/updater-stroke-color";
+await loadStrokeColorUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "stroke": {
+      "color": {
+        "value": "#ffffff",
+        "animation": {
+          "h": { "enable": true, "speed": 10 }
+        }
+      },
+      "width": 1
+    }
+  }
+}
+```
+
+---
+
+### out-modes
+
+**Package:** `@tsparticles/updater-out-modes` · **Function:** `loadOutModesUpdater` · **Key:** `"outModes"`
+
+Controls what happens when a particle reaches the edge of the canvas. Modes include bouncing off the boundary, wrapping to the opposite side, being destroyed, or being deflected. This updater is included in almost all bundles.
+
+```typescript
+import { loadOutModesUpdater } from "@tsparticles/updater-out-modes";
+await loadOutModesUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "outModes": {
+        "default": "bounce",
+        "top": "out",
+        "bottom": "destroy"
+      }
+    }
+  }
+}
+```
+
+Available mode values: `"out"`, `"bounce"`, `"bounceHorizontal"`, `"bounceVertical"`, `"destroy"`, `"none"`.
+
+---
+
+### destroy
+
+**Package:** `@tsparticles/updater-destroy` · **Function:** `loadDestroyUpdater` · **Key:** `"destroy"`
+
+Controls destruction behavior — optionally splitting a particle into smaller particles when it is destroyed, or producing a burst at the destruction point.
+
+```typescript
+import { loadDestroyUpdater } from "@tsparticles/updater-destroy";
+await loadDestroyUpdater(engine);
+```
+
+```json
+{
+  "particles": {
+    "destroy": {
+      "mode": "split",
+      "split": {
+        "count": 1,
+        "factor": { "value": 3 },
+        "rate": { "value": { "min": 4, "max": 9 } }
+      }
+    }
+  }
+}
+```
+
+---
+
+## All updaters at a glance
+
+| Directory | Package | Load function | Updater key |
+|-----------|---------|---------------|-------------|
+| `destroy` | `@tsparticles/updater-destroy` | `loadDestroyUpdater` | `"destroy"` |
+| `fillColor` | `@tsparticles/updater-fill-color` | `loadFillColorUpdater` | `"color"` |
+| `gradient` | `@tsparticles/updater-gradient` | `loadGradientUpdater` | `"gradient"` |
+| `life` | `@tsparticles/updater-life` | `loadLifeUpdater` | `"life"` |
+| `opacity` | `@tsparticles/updater-opacity` | `loadOpacityUpdater` | `"opacity"` |
+| `orbit` | `@tsparticles/updater-orbit` | `loadOrbitUpdater` | `"orbit"` |
+| `outModes` | `@tsparticles/updater-out-modes` | `loadOutModesUpdater` | `"outModes"` |
+| `roll` | `@tsparticles/updater-roll` | `loadRollUpdater` | `"roll"` |
+| `rotate` | `@tsparticles/updater-rotate` | `loadRotateUpdater` | `"rotate"` |
+| `size` | `@tsparticles/updater-size` | `loadSizeUpdater` | `"size"` |
+| `strokeColor` | `@tsparticles/updater-stroke-color` | `loadStrokeColorUpdater` | `"strokeColor"` |
+| `tilt` | `@tsparticles/updater-tilt` | `loadTiltUpdater` | `"tilt"` |
+| `twinkle` | `@tsparticles/updater-twinkle` | `loadTwinkleUpdater` | `"twinkle"` |
+| `wobble` | `@tsparticles/updater-wobble` | `loadWobbleUpdater` | `"wobble"` |
+
+## Writing a custom updater
+
+Implement `IParticleUpdater` from `@tsparticles/engine` and register it with `engine.pluginManager.addParticleUpdater`:
+
+```typescript
+import { type Engine, type IDelta, type IParticleUpdater, type Particle } from "@tsparticles/engine";
+
+class PulseUpdater implements IParticleUpdater {
+  init(particle: Particle): void {
+    // set up any per-particle state here
+  }
+
+  isEnabled(particle: Particle): boolean {
+    return !particle.destroyed;
+  }
+
+  update(particle: Particle, delta: IDelta): void {
+    // modify particle state every frame
+    // delta.value is the time elapsed in milliseconds
+  }
+}
+
+export async function loadPulseUpdater(engine: Engine): Promise<void> {
+  await engine.pluginManager.register(e => {
+    e.pluginManager.addParticleUpdater("pulse", async () => new PulseUpdater());
+  });
+}
+```

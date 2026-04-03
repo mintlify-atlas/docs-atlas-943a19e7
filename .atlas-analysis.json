@@ -1,0 +1,117 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "tsParticles",
+  "projectDescription": "A lightweight, dependency-free TypeScript library for creating highly customizable particles, confetti, and fireworks animations on the web, with official components for React, Vue, Angular, Svelte, and more.",
+  "theme": "palm",
+  "primaryColor": "#895ea6",
+  "lightColor": "#201f1e",
+  "darkColor": "#2745a5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "bundles"
+            ]
+          },
+          {
+            "group": "Framework Integrations",
+            "pages": [
+              "integrations/react",
+              "integrations/vue",
+              "integrations/angular",
+              "integrations/svelte",
+              "integrations/other"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/options",
+              "configuration/particles",
+              "configuration/interactions",
+              "configuration/presets"
+            ]
+          },
+          {
+            "group": "Plugins & Extensions",
+            "pages": [
+              "plugins/overview",
+              "plugins/shapes",
+              "plugins/paths",
+              "plugins/effects"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/confetti",
+              "guides/fireworks",
+              "guides/custom-plugin",
+              "guides/migration-from-particles-js"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core",
+            "pages": [
+              "api/engine",
+              "api/container",
+              "api/particle"
+            ]
+          },
+          {
+            "group": "Options",
+            "pages": [
+              "api/options-reference",
+              "api/particles-options"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Highly customizable particle animations using a simple JSON configuration",
+    "Confetti and fireworks effects with zero dependencies",
+    "Official framework components for React, Vue 2/3, Angular, Svelte, and more",
+    "Plugin system for custom shapes, paths, interactions, and effects",
+    "CDN-ready bundles (basic, slim, full, all) for progressive feature loading",
+    "Retina display support and reduced motion accessibility",
+    "Particle interactions: attract, repulse, bubble, grab, push, remove, and more",
+    "Multiple path algorithms: Perlin noise, Simplex noise, curl noise, SVG paths, and more"
+  ],
+  "publicApiSurface": [
+    "tsParticles.load(params: ILoadParams): Promise<Container>",
+    "tsParticles.refresh(): Promise<void>",
+    "tsParticles.item(index: number): Container | undefined",
+    "tsParticles.addEventListener(type: string, listener: CustomEventListener): void",
+    "tsParticles.removeEventListener(type: string, listener: CustomEventListener): void",
+    "tsParticles.pluginManager (PluginManager)",
+    "Engine class",
+    "Container class (play, pause, refresh, destroy, start, stop)",
+    "confetti(id?, options?: IConfettiOptions): Promise<Container>",
+    "IOptions interface (autoPlay, background, clear, delay, detectRetina, fpsLimit, fullScreen, particles, preset, smooth)",
+    "IParticlesOptions interface (bounce, color, move, number, opacity, shape, size, stroke, zIndex)",
+    "IPlugin interface (for custom plugin development)",
+    "IShapeDrawer interface (for custom shape development)",
+    "IParticleUpdater interface (for custom updater development)",
+    "IEffectDrawer interface (for custom effect development)",
+    "@tsparticles/engine package",
+    "@tsparticles/confetti package",
+    "@tsparticles/fireworks package",
+    "@tsparticles/basic package",
+    "@tsparticles/slim package",
+    "tsparticles package (full bundle)",
+    "@tsparticles/all package (all features)"
+  ]
+}

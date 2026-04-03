@@ -1,0 +1,319 @@
+---
+title: "Engine"
+description: "The Engine class and the tsParticles singleton that manages all particle container instances."
+keywords: ["engine", "tsParticles", "singleton", "load", "container", "plugin"]
+---
+
+The `Engine` class is the central coordinator of tsParticles. It is exposed as a global singleton via `globalThis.tsParticles` and is responsible for creating, tracking, and destroying [`Container`](/api/container) instances, managing plugins, and dispatching lifecycle events.
+
+```typescript
+declare global {
+  var tsParticles: Engine;
+}
+```
+
+<Tip>
+  You rarely need to instantiate `Engine` yourself. Import `tsParticles` from your chosen bundle and use it directly.
+</Tip>
+
+## Properties
+
+<ResponseField name="items" type="Container[]">
+  All active [`Container`](/api/container) instances managed by this engine. Destroyed containers are pruned from the array when accessed via [`item(index)`](#item).
+
+  ```typescript
+  get items(): Container[]
+  ```
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  The current engine version string, set at build time via the `__VERSION__` constant.
+
+  ```typescript
+  get version(): string
+  ```
+
+  ```typescript
+  console.log(tsParticles.version); // e.g. "3.7.1"
+  ```
+</ResponseField>
+
+<ResponseField name="pluginManager" type="PluginManager">
+  The [`PluginManager`] instance used by this engine. Plugins register shape drawers, effect drawers, updaters, presets, and palettes through this object.
+
+  ```typescript
+  readonly pluginManager: PluginManager
+  ```
+</ResponseField>
+
+---
+
+## Methods
+
+### load
+
+Loads options to create a new [`Container`](/api/container) instance, attaches it to a DOM element, and starts the animation.
+
+```typescript
+async load(params: ILoadParams): Promise<Container | undefined>
+```
+
+If a container with the same `id` already exists, it is destroyed and replaced. The method returns a promise that resolves with the new `Container`, or `undefined` if initialization fails.
+
+<ParamField path="params" type="ILoadParams" required>
+  Configuration object for the new container. See [`ILoadParams`](#iloadparams) below.
+</ParamField>
+
+**Returns:** `Promise<Container | undefined>`
+
+<CodeGroup>
+
+```typescript Load from inline options
+const container = await tsParticles.load({
+  id: "tsparticles",
+  options: {
+    particles: {
+      number: { value: 80 },
+      move: { enable: true, speed: 2 },
+    },
+  },
+});
+```
+
+```typescript Load from a JSON URL
+const container = await tsParticles.load({
+  id: "tsparticles",
+  url: "/configs/particles.json",
+});
+```
+
+```typescript Load into an existing element
+const el = document.getElementById("my-canvas");
+
+const container = await tsParticles.load({
+  element: el,
+  options: {
+    fullScreen: { enable: true },
+    particles: { number: { value: 100 } },
+  },
+});
+```
+
+</CodeGroup>
+
+---
+
+### refresh
+
+Reloads all currently active containers by stopping and restarting each one. Useful after programmatically changing options.
+
+```typescript
+async refresh(refresh?: boolean): Promise<void>
+```
+
+<ParamField path="refresh" type="boolean" default="true">
+  When `false`, this call is a no-op. Defaults to `true`.
+</ParamField>
+
+```typescript
+// Reload every container after changing a shared configuration
+await tsParticles.refresh();
+```
+
+---
+
+### item
+
+Retrieves a `Container` by its position in the `items` array. If the container at the given index has been destroyed, it is removed from the array and `undefined` is returned.
+
+```typescript
+item(index: number): Container | undefined
+```
+
+<ParamField path="index" type="number" required>
+  Zero-based index into the `items` array.
+</ParamField>
+
+**Returns:** `Container | undefined`
+
+```typescript
+const first = tsParticles.item(0);
+
+if (first) {
+  first.pause();
+}
+```
+
+---
+
+### addEventListener
+
+Registers a listener for an engine-level event. Events are dispatched by both the engine and individual containers.
+
+```typescript
+addEventListener(type: string, listener: CustomEventListener): void
+```
+
+<ParamField path="type" type="string" required>
+  The event name to listen for (e.g. `"containerBuilt"`, `"containerStarted"`, `"particleDestroyed"`).
+</ParamField>
+
+<ParamField path="listener" type="CustomEventListener" required>
+  A callback with the signature `(args?: CustomEventArgs) => void`.
+
+  <Expandable title="CustomEventArgs">
+    <ResponseField name="container" type="Container | undefined">
+      The container that dispatched the event, if applicable.
+    </ResponseField>
+    <ResponseField name="data" type="unknown">
+      Additional event-specific payload.
+    </ResponseField>
+  </Expandable>
+</ParamField>
+
+```typescript
+tsParticles.addEventListener("containerStarted", (args) => {
+  console.log("container started:", args?.container?.id.description);
+});
+```
+
+---
+
+### removeEventListener
+
+Removes a previously registered event listener.
+
+```typescript
+removeEventListener(type: string, listener: CustomEventListener): void
+```
+
+<ParamField path="type" type="string" required>
+  The event name the listener was registered for.
+</ParamField>
+
+<ParamField path="listener" type="CustomEventListener" required>
+  The exact listener function reference that was passed to `addEventListener`.
+</ParamField>
+
+```typescript
+function onStarted(args?: CustomEventArgs) {
+  console.log("started");
+}
+
+tsParticles.addEventListener("containerStarted", onStarted);
+// later…
+tsParticles.removeEventListener("containerStarted", onStarted);
+```
+
+---
+
+### dispatchEvent
+
+Dispatches a custom event to all registered listeners for the given type.
+
+```typescript
+dispatchEvent(type: string, args?: CustomEventArgs): void
+```
+
+<ParamField path="type" type="string" required>
+  The event name to dispatch.
+</ParamField>
+
+<ParamField path="args" type="CustomEventArgs">
+  Optional event payload passed to each listener.
+</ParamField>
+
+```typescript
+tsParticles.dispatchEvent("myCustomEvent", { container: myContainer });
+```
+
+---
+
+### init
+
+Initializes the engine and all registered plugins. This is called automatically by [`load()`](#load) and does not normally need to be called directly. Subsequent calls after the first initialization are no-ops.
+
+```typescript
+async init(): Promise<void>
+```
+
+```typescript
+// Required only when using the engine without calling load()
+await tsParticles.init();
+```
+
+---
+
+### checkVersion
+
+Asserts that a plugin's version matches the engine version. Throws an `Error` if they differ. Plugin authors call this inside their plugin registration function to catch version mismatches early.
+
+```typescript
+checkVersion(pluginVersion: string): void
+```
+
+<ParamField path="pluginVersion" type="string" required>
+  The version string declared by the plugin.
+</ParamField>
+
+```typescript
+// Inside a plugin registration function
+engine.checkVersion("3.7.1"); // throws if engine.version !== "3.7.1"
+```
+
+<Warning>
+  An `Error` is thrown if `pluginVersion` does not exactly match `engine.version`. Always keep plugin packages in sync with the `tsparticles` engine version.
+</Warning>
+
+---
+
+## ILoadParams interface
+
+The `ILoadParams` interface defines the parameters accepted by [`Engine.load()`](#load).
+
+```typescript
+export interface ILoadParams {
+  element?: HTMLElement;
+  id?: string;
+  index?: number;
+  options?: SingleOrMultiple<ISourceOptions>;
+  url?: SingleOrMultiple<string>;
+}
+```
+
+<ParamField path="id" type="string">
+  An identifier for the container. If an existing container shares this `id`, it is replaced. When omitted, the `element`'s `id` attribute is used, or a random identifier is generated.
+</ParamField>
+
+<ParamField path="element" type="HTMLElement">
+  The DOM element that will host the particle canvas. Can be an `HTMLCanvasElement` or any container element. If a `<canvas>` child is already present it will be reused; otherwise one is created and appended.
+</ParamField>
+
+<ParamField path="url" type="string | string[]">
+  A URL or array of URLs pointing to JSON configuration files. When provided alongside `options`, the URL takes precedence. When an array is given, the `index` parameter selects which entry to load.
+</ParamField>
+
+<ParamField path="options" type="ISourceOptions | ISourceOptions[]">
+  Inline options object or array of options objects. This is a `RecursivePartial<IOptions>` — every property is optional. When an array is supplied, `index` selects the active entry.
+</ParamField>
+
+<ParamField path="index" type="number">
+  Selects which element to use when `options` or `url` is an array. When omitted, a random index is chosen.
+</ParamField>
+
+---
+
+## Type aliases
+
+```typescript
+// A value that can be a single item or an array of items
+type SingleOrMultiple<T> = T | T[];
+
+// Callback type for engine and container events
+type CustomEventListener = (args?: CustomEventArgs) => void;
+
+interface CustomEventArgs {
+  container?: Container;
+  data?: unknown;
+}
+```

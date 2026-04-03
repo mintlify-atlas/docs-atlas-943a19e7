@@ -1,0 +1,185 @@
+---
+title: "Plugins & Extensions Overview"
+description: "How tsParticles uses a plugin architecture to let you compose exactly the features you need — shapes, paths, effects, updaters, and more."
+keywords: ["tsparticles", "plugins", "extensions", "IPlugin", "IShapeDrawer", "IEffectDrawer", "IParticleUpdater", "PluginManager"]
+---
+
+The tsParticles engine ships with no built-in visual features. Every shape, movement algorithm, canvas effect, and particle property updater is a separate package that registers itself through the `PluginManager`. This lets you include exactly what your project needs and nothing more.
+
+## How the plugin system works
+
+When you call a `load*` function exported by a plugin package, it queues a loader on `engine.pluginManager`. The loader runs once — before the first call to `tsParticles.load()` — and registers the plugin's implementation with the engine. After that, every container that needs the plugin will receive it automatically.
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { loadCircleShape } from "@tsparticles/shape-circle";
+import { loadOpacityUpdater } from "@tsparticles/updater-opacity";
+
+// Register plugins before loading any container
+await loadCircleShape(tsParticles);
+await loadOpacityUpdater(tsParticles);
+
+// Now load a container — the registered plugins are available
+await tsParticles.load({ id: "canvas", options: { /* ... */ } });
+```
+
+<Note>
+  Plugins must be registered before `tsParticles.load()` is called. The `PluginManager` throws an error if you call `register()` after initialization has completed.
+</Note>
+
+## The four extension points
+
+Each plugin type implements one of four interfaces defined in `@tsparticles/engine`.
+
+### IPlugin
+
+`IPlugin` is the most general extension point. It hooks into the container lifecycle and can add per-container behavior, load additional options, and decide whether it is needed for a given configuration.
+
+```typescript
+export interface IPlugin {
+  readonly id: string;
+
+  // Called when container options are loaded
+  loadOptions(container: Container, options: Options, source?: ISourceOptions): void;
+
+  // Called to load per-particle options
+  loadParticlesOptions?: (
+    container: Container,
+    options: ParticlesOptions,
+    source?: RecursivePartial<IParticlesOptions>,
+  ) => void;
+
+  // Returns the per-container plugin instance
+  getPlugin(container: Container): Promise<IContainerPlugin>;
+
+  // Returns true if this plugin is needed for the given options
+  needsPlugin(options?: ISourceOptions): boolean;
+}
+```
+
+The `getPlugin` method returns an `IContainerPlugin` object, which can hook into the full canvas rendering pipeline: drawing, particle creation and destruction, resize, play/pause, and more.
+
+### IShapeDrawer
+
+`IShapeDrawer` defines how a particle shape is drawn on the canvas. Shapes are registered by name and selected via `particles.shape.type` in your options.
+
+```typescript
+export interface IShapeDrawer<TParticle extends Particle = Particle> {
+  // Required: draw the shape path into the canvas context
+  draw(data: IShapeDrawData<TParticle>): void;
+
+  // Optional lifecycle hooks
+  beforeDraw?: (data: IShapeDrawData<TParticle>) => void;
+  afterDraw?: (data: IShapeDrawData<TParticle>) => void;
+  init?: (container: Container) => Promise<void>;
+  destroy?: (container: Container) => void;
+  loadShape?: (particle: TParticle) => void;
+  particleInit?: (container: Container, particle: TParticle) => void;
+  particleDestroy?: (particle: TParticle) => void;
+  getSidesCount?: (particle: TParticle) => number;
+}
+```
+
+The `draw` method receives an `IShapeDrawData` object containing the canvas `context`, the current `particle`, the scaled `drawPosition`, `drawRadius`, opacity, fill/stroke flags, and transform data.
+
+### IEffectDrawer
+
+`IEffectDrawer` applies a canvas-level visual effect around or over a particle. Unlike shapes, effects are layered on top of the shape and can use `drawBefore` / `drawAfter` to wrap the shape draw call.
+
+```typescript
+export interface IEffectDrawer<TParticle extends Particle = Particle> {
+  // Called before the shape is drawn
+  drawBefore?: (data: IShapeDrawData<TParticle>) => void;
+
+  // Called after the shape is drawn
+  drawAfter?: (data: IShapeDrawData<TParticle>) => void;
+
+  // Lifecycle hooks
+  init?: (container: Container) => Promise<void>;
+  destroy?: (container: Container) => void;
+  loadEffect?: (particle: TParticle) => void;
+  particleInit?: (container: Container, particle: TParticle) => void;
+}
+```
+
+Effects are configured under `particles.effect.type` and can have their own per-particle data under `particles.effect.options`.
+
+### IParticleUpdater
+
+`IParticleUpdater` runs every frame for each particle. Updaters can modify particle state, compute color styles, apply canvas transforms, and clean up when a particle is destroyed.
+
+```typescript
+export interface IParticleUpdater {
+  // Required: runs every animation frame
+  update(particle: Particle, delta: IDelta): void;
+
+  // Required: sets up initial particle state
+  init(particle: Particle): void;
+
+  // Required: returns false to skip update for this particle
+  isEnabled(particle: Particle): boolean;
+
+  // Optional hooks
+  beforeDraw?: (particle: Particle) => void;
+  afterDraw?: (particle: Particle) => void;
+  getColorStyles?: (particle: Particle, context: CanvasContextType, radius: number, opacity: number) => IParticleColorStyle;
+  getTransformValues?: (particle: Particle) => Partial<IParticleTransformValues>;
+  loadOptions?: (options: ParticlesOptions, ...sources: (RecursivePartial<IParticlesOptions> | undefined)[]) => void;
+  reset?: (particle: Particle) => void;
+  particleDestroyed?: (particle: Particle, override?: boolean) => void;
+}
+```
+
+## PluginManager registration methods
+
+The `PluginManager` (accessible as `engine.pluginManager`) exposes the following methods for plugin authors:
+
+| Method | Purpose |
+|--------|---------|
+| `addShape(names, drawer)` | Register a shape drawer under one or more shape type names |
+| `addEffect(name, drawer)` | Register an effect drawer under an effect type name |
+| `addParticleUpdater(name, initializer)` | Register a particle updater |
+| `addPlugin(plugin)` | Register an `IPlugin` implementation |
+| `addPreset(name, options, override?)` | Register a named preset configuration |
+| `addColorManager(name, manager)` | Register a color format parser |
+| `addEasing(name, fn)` | Register an easing function |
+| `register(...loaders)` | Queue loader functions to run during initialization |
+
+All `add*` methods are idempotent — registering the same name twice is a no-op.
+
+## Built-in plugin categories
+
+<CardGroup cols={2}>
+  <Card title="Shapes" icon="shapes" href="/plugins/shapes">
+    19 particle geometry packages: circle, square, triangle, star, polygon, image, emoji, text, and more.
+  </Card>
+  <Card title="Movement paths" icon="route" href="/plugins/paths">
+    14 path algorithms that control particle trajectories: Perlin noise, SVG paths, grid, spiral, Lévy flight, and more.
+  </Card>
+  <Card title="Effects" icon="sparkles" href="/plugins/effects">
+    5 canvas effect packages (bubble, trail, shadow, filter, particles) plus 14 particle updaters covering opacity, rotation, tilt, wobble, orbit, life, and more.
+  </Card>
+  <Card title="Plugins" icon="puzzle-piece" href="/plugins/overview">
+    Full `IPlugin` implementations: emitters, absorbers, polygon mask, canvas mask, sounds, themes, responsive breakpoints, and more.
+  </Card>
+</CardGroup>
+
+## Using bundles instead of individual plugins
+
+Assembling plugins manually gives you full control over bundle size, but for most projects a pre-built bundle is the faster starting point. Bundles wire up all plugin dependencies for you.
+
+```typescript
+// Full bundle — includes everything
+import { tsParticles } from "tsparticles";
+import { loadFull } from "tsparticles";
+await loadFull(tsParticles);
+
+// Slim bundle — engine + core interactions + common shapes + updaters
+import { tsParticles } from "@tsparticles/engine";
+import { loadSlim } from "@tsparticles/slim";
+await loadSlim(tsParticles);
+```
+
+<Tip>
+  If you are only using one or two shapes, load the individual shape packages rather than a full bundle. The saving is significant — each shape package is a few kilobytes.
+</Tip>

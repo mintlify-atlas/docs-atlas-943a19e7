@@ -1,0 +1,592 @@
+---
+title: "Other framework integrations"
+description: "Official tsParticles integrations for jQuery, Preact, SolidJS, RiotJS, Inferno, Ember, Astro, Web Components, and WordPress."
+keywords: ["jquery", "preact", "solid", "riot", "inferno", "ember", "astro", "web components", "wordpress", "tsparticles"]
+---
+
+tsParticles provides official integrations for a wide range of libraries and frameworks beyond React, Vue, Angular, and Svelte.
+
+<CardGroup cols={3}>
+  <Card title="jQuery" icon="code" href="#jquery">
+    `jquery-particles`
+  </Card>
+  <Card title="Preact" icon="code" href="#preact">
+    `preact-particles`
+  </Card>
+  <Card title="SolidJS" icon="code" href="#solidjs">
+    `solid-particles`
+  </Card>
+  <Card title="RiotJS" icon="code" href="#riotjs">
+    `riot-particles`
+  </Card>
+  <Card title="Inferno" icon="code" href="#inferno">
+    `inferno-particles`
+  </Card>
+  <Card title="Ember" icon="code" href="#ember">
+    `ember-tsparticles`
+  </Card>
+  <Card title="Astro" icon="code" href="#astro">
+    `astro-particles`
+  </Card>
+  <Card title="Web Components" icon="code" href="#web-components">
+    `web-particles`
+  </Card>
+  <Card title="WordPress" icon="code" href="#wordpress">
+    `@tsparticles/wordpress`
+  </Card>
+</CardGroup>
+
+---
+
+## jQuery
+
+**Package:** `jquery-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install jquery-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add jquery-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add jquery-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Import and initialize the plugin, then call the `particles` method on a jQuery-wrapped element.
+
+    ```js app.js
+    import $ from "jquery";
+    import "jquery-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    $.fn.particles.init(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => {
+      $("#tsparticles").particles({
+        particles: {
+          number: { value: 80 },
+          color: { value: "#ffffff" },
+          links: { enable: true, color: "#ffffff" },
+          move: { enable: true, speed: 2 },
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: "repulse" },
+          },
+        },
+        detectRetina: true,
+      });
+    });
+    ```
+
+    Add a container element in your HTML:
+
+    ```html index.html
+    <div id="tsparticles"></div>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Preact
+
+**Package:** `preact-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install preact-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add preact-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add preact-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    The API mirrors the React integration. Use `initParticlesEngine` to load the engine, then render the `Particles` component.
+
+    ```tsx ParticlesBackground.tsx
+    import { useEffect, useState } from "preact/hooks";
+    import Particles, { initParticlesEngine } from "preact-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    export function ParticlesBackground() {
+      const [engineReady, setEngineReady] = useState(false);
+
+      useEffect(() => {
+        initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        }).then(() => setEngineReady(true));
+      }, []);
+
+      if (!engineReady) return null;
+
+      return (
+        <Particles
+          id="tsparticles"
+          options={{
+            particles: {
+              number: { value: 80 },
+              color: { value: "#ffffff" },
+              move: { enable: true, speed: 2 },
+            },
+            detectRetina: true,
+          }}
+        />
+      );
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## SolidJS
+
+**Package:** `solid-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install solid-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add solid-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add solid-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Use `createSignal` to track engine readiness, and call `initParticlesEngine` in `onMount`.
+
+    ```tsx ParticlesBackground.tsx
+    import { createSignal, onMount, Show } from "solid-js";
+    import Particles, { initParticlesEngine } from "solid-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    export function ParticlesBackground() {
+      const [engineReady, setEngineReady] = createSignal(false);
+
+      onMount(async () => {
+        await initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        });
+        setEngineReady(true);
+      });
+
+      return (
+        <Show when={engineReady()}>
+          <Particles
+            id="tsparticles"
+            options={{
+              particles: {
+                number: { value: 80 },
+                color: { value: "#ffffff" },
+                move: { enable: true, speed: 2 },
+              },
+              detectRetina: true,
+            }}
+          />
+        </Show>
+      );
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## RiotJS
+
+**Package:** `riot-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install riot-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add riot-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add riot-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Register the `riot-particles` component with Riot, then use it in your tags.
+
+    ```js main.js
+    import { register } from "riot";
+    import RiotParticles from "riot-particles";
+    import { initParticlesEngine } from "riot-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    register("riot-particles", RiotParticles);
+
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    });
+    ```
+
+    ```html app.riot
+    <app>
+      <riot-particles
+        id="tsparticles"
+        options={particlesOptions}
+      />
+
+      <script>
+        export default {
+          particlesOptions: {
+            particles: {
+              number: { value: 80 },
+              color: { value: "#ffffff" },
+              move: { enable: true, speed: 2 },
+            },
+            detectRetina: true,
+          },
+        };
+      </script>
+    </app>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Inferno
+
+**Package:** `inferno-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install inferno-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add inferno-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add inferno-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    The API follows the same pattern as the React integration. Use `initParticlesEngine` to bootstrap the engine, then render the `Particles` component.
+
+    ```tsx ParticlesBackground.tsx
+    import { Component } from "inferno";
+    import Particles, { initParticlesEngine } from "inferno-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    export class ParticlesBackground extends Component {
+      state = { engineReady: false };
+
+      async componentDidMount() {
+        await initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        });
+        this.setState({ engineReady: true });
+      }
+
+      render() {
+        if (!this.state.engineReady) return null;
+
+        return (
+          <Particles
+            id="tsparticles"
+            options={{
+              particles: {
+                number: { value: 80 },
+                color: { value: "#ffffff" },
+                move: { enable: true, speed: 2 },
+              },
+              detectRetina: true,
+            }}
+          />
+        );
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Ember
+
+**Package:** `ember-tsparticles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install ember-tsparticles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add ember-tsparticles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add ember-tsparticles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Configure the engine loader in your app's `app.js` or a dedicated initializer.
+
+    ```js app/app.js
+    import Application from "@ember/application";
+    import { initParticlesEngine } from "ember-tsparticles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    export default class App extends Application {
+      async init(...args) {
+        super.init(...args);
+
+        await initParticlesEngine(async (engine) => {
+          await loadSlim(engine);
+        });
+      }
+    }
+    ```
+
+    Use the `<Particles>` component in your templates:
+
+    ```hbs my-component.hbs
+    <Particles
+      @id="tsparticles"
+      @options={{this.particlesOptions}}
+    />
+    ```
+
+    ```js my-component.js
+    import Component from "@glimmer/component";
+    import { tracked } from "@glimmer/tracking";
+
+    export default class MyComponent extends Component {
+      particlesOptions = {
+        particles: {
+          number: { value: 80 },
+          color: { value: "#ffffff" },
+          move: { enable: true, speed: 2 },
+        },
+        detectRetina: true,
+      };
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Astro
+
+**Package:** `astro-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install astro-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add astro-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add astro-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Import the `Particles` component in your Astro page or layout and specify the engine `init` script path.
+
+    ```astro index.astro
+    ---
+    import Particles from "astro-particles";
+    import type { ISourceOptions } from "@tsparticles/engine";
+
+    const options: ISourceOptions = {
+      background: { color: { value: "#0d47a1" } },
+      particles: {
+        number: { value: 80 },
+        color: { value: "#ffffff" },
+        links: { enable: true, color: "#ffffff" },
+        move: { enable: true, speed: 2 },
+      },
+      detectRetina: true,
+    };
+    ---
+
+    <Particles
+      id="tsparticles"
+      options={options}
+      init="particlesInit"
+    />
+
+    <script>
+      import { initParticlesEngine } from "@tsparticles/engine";
+      import { loadSlim } from "@tsparticles/slim";
+
+      async function particlesInit(engine) {
+        await loadSlim(engine);
+      }
+
+      window["particlesInit"] = particlesInit;
+    </script>
+    ```
+
+    <Note>
+      The `init` prop on the Astro component accepts the name of a globally available function that bootstraps the engine. Define this function in a `<script>` tag and attach it to `window` so the component can find it at runtime.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Web Components
+
+**Package:** `web-particles`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    <Tabs>
+      <Tab title="npm">
+        ```bash
+        npm install web-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="yarn">
+        ```bash
+        yarn add web-particles @tsparticles/slim
+        ```
+      </Tab>
+      <Tab title="pnpm">
+        ```bash
+        pnpm add web-particles @tsparticles/slim
+        ```
+      </Tab>
+    </Tabs>
+
+    Import the package to register the `<web-particles>` custom element, then define your configuration as a JSON attribute.
+
+    ```js main.js
+    import "web-particles";
+    import { initParticlesEngine } from "web-particles";
+    import { loadSlim } from "@tsparticles/slim";
+
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    });
+    ```
+
+    Use the element directly in HTML:
+
+    ```html index.html
+    <web-particles
+      id="tsparticles"
+      options='{"particles":{"number":{"value":80},"color":{"value":"#ffffff"},"move":{"enable":true,"speed":2}},"detectRetina":true}'
+    ></web-particles>
+    ```
+
+    For more readable configuration, set the `options` property via JavaScript:
+
+    ```js
+    const el = document.querySelector("web-particles");
+
+    el.options = {
+      particles: {
+        number: { value: 80 },
+        color: { value: "#ffffff" },
+        move: { enable: true, speed: 2 },
+      },
+      detectRetina: true,
+    };
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## WordPress
+
+**Package:** `@tsparticles/wordpress`
+
+<AccordionGroup>
+  <Accordion title="Installation and usage">
+    The tsParticles WordPress integration is distributed as a WordPress block plugin available from the WordPress.org plugin directory.
+
+    **Install from the WordPress admin panel:**
+
+    1. Go to **Plugins > Add New** in your WordPress admin.
+    2. Search for `tsParticles`.
+    3. Click **Install Now** on the **tsParticles Block** plugin, then click **Activate**.
+
+    **Add particles to a page or post:**
+
+    1. Open a page or post in the block editor.
+    2. Click **+** to add a new block.
+    3. Search for `tsParticles` and select the block.
+    4. Configure the particle options through the block settings panel in the editor sidebar.
+
+    The plugin can also be installed via the npm package for custom development:
+
+    ```bash
+    npm install @tsparticles/wordpress
+    ```
+
+    <Tip>
+      tsParticles also integrates with **Premium Addons for Elementor** through the Particles Section Add-on, if you are using Elementor as your page builder. No code is required.
+    </Tip>
+  </Accordion>
+</AccordionGroup>

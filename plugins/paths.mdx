@@ -1,0 +1,478 @@
+---
+title: "Movement Paths"
+description: "All available tsParticles path generator packages. Path generators control the trajectory of particle movement using algorithms such as Perlin noise, SVG paths, grids, spirals, and Lévy flight."
+keywords: ["tsparticles", "paths", "movement", "perlin noise", "simplex noise", "curl noise", "svg path", "particle trajectory", "IPathGenerator"]
+---
+
+Path generators replace the default straight-line movement with algorithmic trajectories. Each path is a separate package that extends the `@tsparticles/plugin-move` system. You enable a path on a particle group by setting `particles.move.path.generator` to the generator's registered name.
+
+## How paths work
+
+Path generators are registered via `addPathGenerator` on a `MoveEngine` — an extension of the base engine provided by `@tsparticles/plugin-move`. Every path package calls `ensureBaseMoverLoaded` to make sure the move plugin is present, then registers its generator.
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { loadPerlinNoisePath } from "@tsparticles/path-perlin-noise";
+
+await loadPerlinNoisePath(tsParticles);
+
+await tsParticles.load({
+  id: "canvas",
+  options: {
+    particles: {
+      move: {
+        enable: true,
+        path: {
+          enable: true,
+          generator: "perlinNoise",
+        },
+      },
+    },
+  },
+});
+```
+
+<Info>
+  All path packages depend on `@tsparticles/plugin-move` as a peer dependency. Make sure it is installed, or use a bundle that includes it.
+</Info>
+
+## Configuring the path option
+
+The `particles.move.path` block controls path behavior:
+
+```json
+{
+  "particles": {
+    "move": {
+      "enable": true,
+      "path": {
+        "enable": true,
+        "generator": "<generatorName>",
+        "options": {
+          // generator-specific options go here
+        },
+        "delay": {
+          "value": 0
+        },
+        "clamp": true
+      }
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `enable` | Activates path-based movement |
+| `generator` | The registered generator name |
+| `options` | Generator-specific configuration |
+| `delay.value` | Seconds to wait before path movement starts |
+| `clamp` | Whether to clamp path vector values |
+
+## Available paths
+
+### branches
+
+**Package:** `@tsparticles/path-branches` · **Function:** `loadBranchesPath` · **Generator:** `"branchesPathGenerator"`
+
+Simulates organic branching growth — particles move in segments and occasionally make sharp directional changes. Configurable branch probability, segment length, and optional inertia-based smooth interpolation.
+
+```typescript
+import { loadBranchesPath } from "@tsparticles/path-branches";
+await loadBranchesPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "branchesPathGenerator",
+        "options": {
+          "branchChance": 0.1,
+          "segmentLength": 20,
+          "maxAngle": 0.5,
+          "speedVariation": 0.2,
+          "inertia": { "enable": true, "factor": 0.05 }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### brownian
+
+**Package:** `@tsparticles/path-brownian` · **Function:** `loadBrownianPath` · **Generator:** `"brownianPathGenerator"`
+
+Simulates Brownian motion — random walk with small random displacements each frame, producing natural diffusion behaviour.
+
+```typescript
+import { loadBrownianPath } from "@tsparticles/path-brownian";
+await loadBrownianPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "brownianPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### curlNoise
+
+**Package:** `@tsparticles/path-curl-noise` · **Function:** `loadCurlNoisePath` · **Generator:** `"curlNoise"`
+
+Uses curl noise — the rotational derivative of a noise field — to produce smooth, swirling, divergence-free flow fields. Particles follow coherent stream-lines that curl around each other without crossing.
+
+```typescript
+import { loadCurlNoisePath } from "@tsparticles/path-curl-noise";
+await loadCurlNoisePath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "curlNoise"
+      }
+    }
+  }
+}
+```
+
+---
+
+### curves
+
+**Package:** `@tsparticles/path-curves` · **Function:** `loadCurvesPath` · **Generator:** `"curvesPathGenerator"`
+
+Guides particles along smooth parametric curves. Produces flowing, wave-like trajectories.
+
+```typescript
+import { loadCurvesPath } from "@tsparticles/path-curves";
+await loadCurvesPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "curvesPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### fractalNoise
+
+**Package:** `@tsparticles/path-fractal-noise` · **Function:** `loadFractalNoisePath` · **Generator:** `"fractalNoise"`
+
+Generates fractal (octave-layered) noise to drive particle movement. Produces more turbulent, detailed patterns than single-octave noise generators.
+
+```typescript
+import { loadFractalNoisePath } from "@tsparticles/path-fractal-noise";
+await loadFractalNoisePath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "fractalNoise"
+      }
+    }
+  }
+}
+```
+
+---
+
+### grid
+
+**Package:** `@tsparticles/path-grid` · **Function:** `loadGridPath` · **Generator:** `"gridPathGenerator"`
+
+Moves particles along a grid graph. The grid can be auto-generated as a random maze, or you can supply an explicit adjacency graph. Particles traverse the graph cells, producing structured, maze-like motion.
+
+```typescript
+import { loadGridPath } from "@tsparticles/path-grid";
+await loadGridPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "gridPathGenerator",
+        "options": {
+          "cellSize": 50,
+          "autoMaze": true
+        }
+      }
+    }
+  }
+}
+```
+
+| Option | Description |
+|--------|-------------|
+| `cellSize` | Size in pixels of each grid cell |
+| `autoMaze` | Generate a random maze automatically |
+| `graph` | Explicit adjacency graph (`"x,y"` → `[allowed directions]`) |
+
+---
+
+### levy
+
+**Package:** `@tsparticles/path-levy` · **Function:** `loadLevyPath` · **Generator:** `"levyPathGenerator"`
+
+Simulates a Lévy flight — a random walk where occasional very long jumps occur according to a heavy-tailed distribution. Produces the characteristic "burst and wander" pattern seen in animal foraging.
+
+```typescript
+import { loadLevyPath } from "@tsparticles/path-levy";
+await loadLevyPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "levyPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### perlinNoise
+
+**Package:** `@tsparticles/path-perlin-noise` · **Function:** `loadPerlinNoisePath` · **Generator:** `"perlinNoise"`
+
+Samples a Perlin noise field to compute smooth, continuous velocity vectors. Particles flow along coherent stream-lines that change slowly over time. This is the most commonly used path generator for organic, fluid-like effects.
+
+**Peer dependencies:** `@tsparticles/noise-field`, `@tsparticles/perlin-noise`, `@tsparticles/plugin-move`
+
+```typescript
+import { loadPerlinNoisePath } from "@tsparticles/path-perlin-noise";
+await loadPerlinNoisePath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "speed": 2,
+      "path": {
+        "enable": true,
+        "generator": "perlinNoise"
+      }
+    }
+  }
+}
+```
+
+---
+
+### polygon
+
+**Package:** `@tsparticles/path-polygon` · **Function:** `loadPolygonPath` · **Generator:** `"polygonPathGenerator"`
+
+Guides particles around the edges of a polygon. Useful for tracing geometric outlines.
+
+```typescript
+import { loadPolygonPath } from "@tsparticles/path-polygon";
+await loadPolygonPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "polygonPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### random
+
+**Package:** `@tsparticles/path-random` · **Function:** `loadRandomPath` · **Generator:** `"randomPathGenerator"`
+
+Generates a uniformly random direction each step. Produces completely unpredictable motion — equivalent to a random walk but changing direction every frame.
+
+```typescript
+import { loadRandomPath } from "@tsparticles/path-random";
+await loadRandomPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "randomPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### simplexNoise
+
+**Package:** `@tsparticles/path-simplex-noise` · **Function:** `loadSimplexNoisePath` · **Generator:** `"simplexNoise"`
+
+Samples a simplex noise field. Simplex noise is computationally cheaper than Perlin noise and has fewer directional artifacts, making it well-suited for large particle counts.
+
+```typescript
+import { loadSimplexNoisePath } from "@tsparticles/path-simplex-noise";
+await loadSimplexNoisePath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "simplexNoise"
+      }
+    }
+  }
+}
+```
+
+---
+
+### spiral
+
+**Package:** `@tsparticles/path-spiral` · **Function:** `loadSpiralPath` · **Generator:** `"spiralPathGenerator"`
+
+Guides particles along an outward or inward spiral trajectory.
+
+```typescript
+import { loadSpiralPath } from "@tsparticles/path-spiral";
+await loadSpiralPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "spiralPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+### svg
+
+**Package:** `@tsparticles/path-svg` · **Function:** `loadSVGPath` · **Generator:** `"svgPathGenerator"`
+
+Traces particle motion along the path data of an inline SVG element in the DOM. Particles follow the exact curves defined by the SVG `<path>` `d` attribute, making it possible to animate text outlines, logos, or any arbitrary vector shape.
+
+```typescript
+import { loadSVGPath } from "@tsparticles/path-svg";
+await loadSVGPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "svgPathGenerator",
+        "options": {
+          "element": "#svgPath"
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### zigzag
+
+**Package:** `@tsparticles/path-zig-zag` · **Function:** `loadZigZagPath` · **Generator:** `"zigZagPathGenerator"`
+
+Moves particles in a repeating zig-zag pattern, alternating direction at a configurable angle.
+
+```typescript
+import { loadZigZagPath } from "@tsparticles/path-zig-zag";
+await loadZigZagPath(engine);
+```
+
+```json
+{
+  "particles": {
+    "move": {
+      "path": {
+        "enable": true,
+        "generator": "zigZagPathGenerator"
+      }
+    }
+  }
+}
+```
+
+---
+
+## All paths at a glance
+
+| Directory | Package | Generator name |
+|-----------|---------|----------------|
+| `branches` | `@tsparticles/path-branches` | `"branchesPathGenerator"` |
+| `brownian` | `@tsparticles/path-brownian` | `"brownianPathGenerator"` |
+| `curlNoise` | `@tsparticles/path-curl-noise` | `"curlNoise"` |
+| `curves` | `@tsparticles/path-curves` | `"curvesPathGenerator"` |
+| `fractalNoise` | `@tsparticles/path-fractal-noise` | `"fractalNoise"` |
+| `grid` | `@tsparticles/path-grid` | `"gridPathGenerator"` |
+| `levy` | `@tsparticles/path-levy` | `"levyPathGenerator"` |
+| `perlinNoise` | `@tsparticles/path-perlin-noise` | `"perlinNoise"` |
+| `polygon` | `@tsparticles/path-polygon` | `"polygonPathGenerator"` |
+| `random` | `@tsparticles/path-random` | `"randomPathGenerator"` |
+| `simplexNoise` | `@tsparticles/path-simplex-noise` | `"simplexNoise"` |
+| `spiral` | `@tsparticles/path-spiral` | `"spiralPathGenerator"` |
+| `svg` | `@tsparticles/path-svg` | `"svgPathGenerator"` |
+| `zigzag` | `@tsparticles/path-zig-zag` | `"zigZagPathGenerator"` |

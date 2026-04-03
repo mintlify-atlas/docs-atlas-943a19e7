@@ -1,0 +1,411 @@
+---
+title: "Container"
+description: "The Container class represents a running tsParticles instance attached to a DOM element."
+keywords: ["container", "play", "pause", "destroy", "refresh", "particles", "options"]
+---
+
+A `Container` is the object returned by [`tsParticles.load()`](/api/engine#load). It manages the canvas, particle population, animation loop, and plugin lifecycle for a single tsParticles instance on the page.
+
+```typescript
+const container = await tsParticles.load({
+  id: "tsparticles",
+  options: { particles: { number: { value: 80 } } },
+});
+```
+
+<Info>
+  You should not construct a `Container` directly. Always obtain one through `tsParticles.load()`.
+</Info>
+
+---
+
+## Properties
+
+<ResponseField name="id" type="symbol">
+  A unique `Symbol` whose description is the string `id` passed to [`tsParticles.load()`](/api/engine#load). Use `container.id.description` to read the string identifier.
+
+  ```typescript
+  readonly id: symbol
+  ```
+
+  ```typescript
+  console.log(container.id.description); // "tsparticles"
+  ```
+</ResponseField>
+
+<ResponseField name="options" type="Options">
+  The resolved options object currently in use by the container. This is a live `Options` instance and reflects the merged result of all loaded configuration sources.
+
+  ```typescript
+  get options(): Options
+  ```
+</ResponseField>
+
+<ResponseField name="sourceOptions" type="ISourceOptions | undefined">
+  The raw options object that was most recently supplied to the container (via `tsParticles.load()` or `container.reset()`). This is the user-supplied partial options before merging with defaults.
+
+  ```typescript
+  get sourceOptions(): ISourceOptions | undefined
+  ```
+</ResponseField>
+
+<ResponseField name="actualOptions" type="Options">
+  The fully-resolved options after plugins have applied their modifications. This is what the animation loop reads at runtime.
+
+  ```typescript
+  actualOptions: Options
+  ```
+</ResponseField>
+
+<ResponseField name="canvas" type="CanvasManager">
+  Manages the `HTMLCanvasElement`, its size, retina scaling, background rendering, and the drawing pipeline.
+
+  ```typescript
+  readonly canvas: CanvasManager
+  ```
+</ResponseField>
+
+<ResponseField name="particles" type="ParticlesManager">
+  Manages the active particle population — creation, removal, density control, and per-frame updates.
+
+  ```typescript
+  readonly particles: ParticlesManager
+  ```
+
+  ```typescript
+  // Count currently active particles
+  console.log(container.particles.count);
+  ```
+</ResponseField>
+
+<ResponseField name="destroyed" type="boolean">
+  `true` if [`destroy()`](#destroy) has been called on this container. A destroyed container should not be used.
+
+  ```typescript
+  destroyed: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="started" type="boolean">
+  `true` between a successful call to [`start()`](#start) and a call to [`stop()`](#stop).
+
+  ```typescript
+  started: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="animationStatus" type="boolean">
+  `true` when the animation loop is actively running (not paused, not page-hidden, and not destroyed).
+
+  ```typescript
+  get animationStatus(): boolean
+  ```
+</ResponseField>
+
+<ResponseField name="fpsLimit" type="number">
+  The active frames-per-second cap, taken from `options.fpsLimit`. Defaults to `120`.
+
+  ```typescript
+  fpsLimit: number
+  ```
+</ResponseField>
+
+<ResponseField name="pageHidden" type="boolean">
+  Set to `true` when the page visibility API reports the tab is hidden. The animation loop pauses automatically while this is `true`.
+
+  ```typescript
+  pageHidden: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="retina" type="Retina">
+  Provides device pixel ratio scaling values used by the canvas and particles. Initialized during [`init()`](#init).
+
+  ```typescript
+  readonly retina: Retina
+  ```
+</ResponseField>
+
+<ResponseField name="plugins" type="IContainerPlugin[]">
+  The list of active plugin instances for this container. Populated during [`init()`](#init) for plugins that declare they are needed by the current options.
+
+  ```typescript
+  readonly plugins: IContainerPlugin[]
+  ```
+</ResponseField>
+
+<ResponseField name="zLayers" type="number">
+  The total number of z-index layers available for particles. Defaults to `100`.
+
+  ```typescript
+  zLayers: number
+  ```
+</ResponseField>
+
+<ResponseField name="hdr" type="boolean">
+  Whether HDR (high color precision) mode is enabled for this container.
+
+  ```typescript
+  hdr: boolean
+  ```
+</ResponseField>
+
+---
+
+## Methods
+
+### play
+
+Resumes or starts the animation loop. If the container was previously paused, all registered plugins are notified before drawing begins.
+
+```typescript
+play(force?: boolean): void
+```
+
+<ParamField path="force" type="boolean">
+  When `true`, forces a re-start of the animation regardless of current pause state.
+</ParamField>
+
+```typescript
+container.play();
+```
+
+<Note>
+  If `options.autoPlay` is `false`, the first call to `play()` after `start()` is silently ignored. You must call `play()` again explicitly after the initial setup.
+</Note>
+
+---
+
+### pause
+
+Stops the animation loop and notifies all plugins. The canvas and particles remain in their current state.
+
+```typescript
+pause(): void
+```
+
+```typescript
+// Pause when the user switches away from the relevant section
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    container.pause();
+  } else {
+    container.play();
+  }
+});
+```
+
+---
+
+### refresh
+
+Stops and restarts the container. This is equivalent to calling [`stop()`](#stop) followed by [`start()`](#start). All particles are cleared and re-created from the current options.
+
+```typescript
+async refresh(): Promise<void>
+```
+
+```typescript
+// Apply new options then refresh
+container.sourceOptions; // read current
+await container.refresh();
+```
+
+---
+
+### reset
+
+Replaces the source options and performs a full refresh. Use this to change the entire configuration of a running container without creating a new one.
+
+```typescript
+async reset(sourceOptions?: ISourceOptions): Promise<void>
+```
+
+<ParamField path="sourceOptions" type="ISourceOptions">
+  A `RecursivePartial<IOptions>` object that replaces the container's configuration. Pass `undefined` to reset to engine defaults.
+</ParamField>
+
+```typescript
+await container.reset({
+  particles: {
+    number: { value: 200 },
+    move: { enable: true, speed: 6 },
+  },
+});
+```
+
+---
+
+### start
+
+Initializes the container and begins the animation. Called automatically by `tsParticles.load()`. Only has an effect if the container has not already been started or is not destroyed.
+
+```typescript
+async start(): Promise<void>
+```
+
+```typescript
+// Manually start after creating a container without auto-play
+await container.start();
+```
+
+---
+
+### stop
+
+Stops the animation, removes all event listeners, clears the particle collection, and stops the canvas. The container is not destroyed and can be restarted with [`start()`](#start).
+
+```typescript
+stop(): void
+```
+
+```typescript
+container.stop();
+// later…
+await container.start();
+```
+
+---
+
+### destroy
+
+Permanently invalidates the container. Stops the animation, destroys all particles, cleans up the canvas, and notifies plugins. Sets `destroyed = true`. The container cannot be used after this call.
+
+```typescript
+destroy(remove?: boolean): void
+```
+
+<ParamField path="remove" type="boolean" default="true">
+  When `true` (the default), the container is also removed from `tsParticles.items`. Pass `false` to keep the slot in the items array (used internally during replacement).
+</ParamField>
+
+```typescript
+container.destroy();
+console.log(container.destroyed); // true
+```
+
+---
+
+### draw
+
+Schedules a single animation frame. Called internally by the animation loop and should not normally be called directly.
+
+```typescript
+draw(force: boolean): void
+```
+
+<ParamField path="force" type="boolean" required>
+  When `true`, clears the last frame timestamp so the next frame is treated as the first.
+</ParamField>
+
+---
+
+### export
+
+Exports the canvas content using a registered export plugin. Returns a `Blob` containing the exported data.
+
+```typescript
+async export(type: string, options?: Record<string, unknown>): Promise<Blob | undefined>
+```
+
+<ParamField path="type" type="string" required>
+  The export format string, matched against registered export plugins (e.g. `"png"`, `"gif"`).
+</ParamField>
+
+<ParamField path="options" type="Record<string, unknown>">
+  Additional export options passed to the plugin. Defaults to an empty object.
+</ParamField>
+
+**Returns:** `Promise<Blob | undefined>` — resolves to the exported file blob, or `undefined` if no plugin supports the given type.
+
+```typescript
+const blob = await container.export("png");
+
+if (blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "particles.png";
+  a.click();
+}
+```
+
+---
+
+### dispatchEvent
+
+Dispatches a container-level event back through the engine's event dispatcher.
+
+```typescript
+dispatchEvent(type: string, data?: unknown): void
+```
+
+<ParamField path="type" type="string" required>
+  The event name to dispatch.
+</ParamField>
+
+<ParamField path="data" type="unknown">
+  Optional payload attached to the event's `data` property.
+</ParamField>
+
+---
+
+### alive
+
+Returns whether the container is still within its configured `duration`. When `duration` is `0` (the default), the container lives indefinitely.
+
+```typescript
+alive(): boolean
+```
+
+**Returns:** `boolean`
+
+---
+
+### addLifeTime
+
+Increments the container's internal lifetime counter. Called automatically each animation frame with the frame delta value.
+
+```typescript
+addLifeTime(value: number): void
+```
+
+<ParamField path="value" type="number" required>
+  Milliseconds to add to the lifetime counter.
+</ParamField>
+
+---
+
+### updateActualOptions
+
+Invokes `updateActualOptions()` on each active plugin and returns whether any plugin indicated a refresh is needed.
+
+```typescript
+updateActualOptions(): boolean
+```
+
+**Returns:** `boolean`
+
+---
+
+## Lifecycle events
+
+The container dispatches the following string event types through the engine:
+
+| Event name             | When fired                                      |
+| ---------------------- | ----------------------------------------------- |
+| `containerBuilt`       | At the end of the `Container` constructor        |
+| `containerInit`        | After `init()` completes                        |
+| `containerStarted`     | After `start()` completes (before first frame)  |
+| `containerStopped`     | After `stop()` completes                        |
+| `containerPaused`      | After `pause()` completes                       |
+| `containerPlay`        | When `play()` is called                         |
+| `containerDestroyed`   | After `destroy()` completes                     |
+| `particlesSetup`       | After initial particles are positioned          |
+
+```typescript
+tsParticles.addEventListener("containerStarted", (args) => {
+  const c = args?.container;
+  console.log(`${c?.id.description} started with ${c?.particles.count} particles`);
+});
+```

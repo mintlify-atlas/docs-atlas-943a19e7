@@ -1,0 +1,283 @@
+---
+title: "Migrating from particles.js"
+description: "How to replace particles.js with tsParticles using the drop-in compatibility package."
+keywords: ["particles.js", "migration", "tsparticles", "compatibility", "@tsparticles/particles.js"]
+---
+
+tsParticles provides `@tsparticles/particles.js`, a compatibility package that exposes the original `particlesJS()` global and accepts unmodified particles.js configuration objects. For most projects, migration is a single script swap.
+
+## Why migrate
+
+<AccordionGroup>
+  <Accordion title="particles.js is unmaintained">
+    The original particles.js library has not received updates since 2016. It has no support for modern browser APIs, TypeScript, or ES modules.
+  </Accordion>
+  <Accordion title="TypeScript and tree-shaking">
+    tsParticles is written in TypeScript and ships full type definitions. The modular package structure lets bundlers tree-shake unused features, keeping bundle sizes small.
+  </Accordion>
+  <Accordion title="Many more shapes and effects">
+    tsParticles supports dozens of shapes (`circle`, `square`, `star`, `polygon`, `emoji`, `heart`, `image`, and more), particle effects (trail, bubble, shadow), interaction modes, path algorithms, and export formats — none of which exist in particles.js.
+  </Accordion>
+  <Accordion title="Framework components">
+    Official component wrappers exist for React, Vue 2, Vue 3, Angular, Svelte, Solid, Preact, and others. particles.js has no first-party framework support.
+  </Accordion>
+  <Accordion title="Active maintenance">
+    tsParticles receives regular updates, bug fixes, and new features. It is actively maintained by the community.
+  </Accordion>
+</AccordionGroup>
+
+## Quick migration (script swap)
+
+If you load particles.js from a CDN, replace the script tag and add a short initialisation call.
+
+**Before:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+  particlesJS("particles-js", { /* your config */ });
+</script>
+```
+
+**After:**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@tsparticles/particles.js@latest/tsparticles.pjs.bundle.min.js"></script>
+<script>
+  (async function (engine) {
+    await initPjs(engine);
+
+    particlesJS("particles-js", { /* your existing config — unchanged */ });
+  })(tsParticles);
+</script>
+```
+
+<Note>
+  `initPjs()` loads the full tsParticles engine and registers the `particlesJS` global. Your existing config object does not need any changes.
+</Note>
+
+## npm installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/particles.js
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/particles.js
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/particles.js
+    ```
+  </Tab>
+</Tabs>
+
+### Module usage
+
+```typescript
+import { tsParticles } from "@tsparticles/engine";
+import { initPjs } from "@tsparticles/particles.js";
+
+(async (engine) => {
+  await initPjs(engine);
+
+  // particlesJS is now available globally
+  particlesJS("particles-js", {
+    /* your existing config */
+  });
+})(tsParticles);
+```
+
+## What initPjs does
+
+Calling `initPjs(engine)` performs three things:
+
+1. Loads the full tsParticles bundle (`tsparticles`) plus `@tsparticles/plugin-responsive`.
+2. Registers the `particlesJS` global function that accepts particles.js config objects.
+3. Registers the `pJSDom` global array and the `Particles` (MarcBruederlin-style) global object.
+
+## Globals registered
+
+| Global | Type | Description |
+|--------|------|-------------|
+| `particlesJS` | `(tagId, options) => Promise<Container>` | Main compatibility API. Accepts particles.js config objects. |
+| `pJSDom` | `Container[]` | Array of all active tsParticles containers (mirrors the particles.js `pJSDom`). |
+| `Particles` | `typeof MBParticles` | Alternative API compatible with the `marcbruederlin/particles.js` variant. |
+
+## Configuration compatibility
+
+The `particlesJS()` function accepts the original particles.js option structure directly. The table below shows how each particles.js key maps to its tsParticles equivalent internally.
+
+| particles.js option | tsParticles equivalent |
+|---------------------|------------------------|
+| `particles.number.value` | `particles.number.value` |
+| `particles.number.density.enable` | `particles.number.density.enable` |
+| `particles.number.density.value_area` | `particles.number.density.width` |
+| `particles.color.value` | `particles.color.value` |
+| `particles.shape.type` | `particles.shape.type` |
+| `particles.shape.stroke.width` | `particles.stroke.width` |
+| `particles.shape.stroke.color` | `particles.stroke.color.value` |
+| `particles.shape.polygon.nb_sides` | `particles.shape.options.polygon.sides` |
+| `particles.shape.image.src` | `particles.shape.options.image.src` |
+| `particles.opacity.value` | `particles.opacity.value` |
+| `particles.opacity.random` | randomises opacity between 0 and `value` |
+| `particles.opacity.anim.*` | `particles.opacity.animation.*` |
+| `particles.size.value` | `particles.size.value` |
+| `particles.size.random` | randomises size between 0 and `value` |
+| `particles.size.anim.*` | `particles.size.animation.*` |
+| `particles.line_linked.*` | `particles.links.*` |
+| `particles.move.speed` | `particles.move.speed` (divided by 3 internally) |
+| `particles.move.direction` | `particles.move.direction` |
+| `particles.move.out_mode` | `particles.move.outModes` |
+| `particles.move.bounce` | `particles.collisions.enable` |
+| `particles.move.attract.*` | `particles.attract.*` |
+| `interactivity.detect_on` | `interactivity.detectsOn` |
+| `interactivity.events.onhover.*` | `interactivity.events.onHover.*` |
+| `interactivity.events.onclick.*` | `interactivity.events.onClick.*` |
+| `interactivity.modes.grab.line_linked.opacity` | `interactivity.modes.grab.links.opacity` |
+| `interactivity.modes.push.particles_nb` | `interactivity.modes.push.quantity` |
+| `interactivity.modes.remove.particles_nb` | `interactivity.modes.remove.quantity` |
+| `retina_detect` | `detectRetina` |
+
+<Warning>
+  The `particles.move.speed` value is divided by 3 internally during translation. If your particles appear faster after migration, reduce your `speed` value accordingly, or set it directly in tsParticles format once you are ready to drop the compatibility layer.
+</Warning>
+
+## Loading a JSON config file
+
+particles.js supported loading a config file via `particlesJS.load()`. This still works:
+
+```javascript
+particlesJS.load("particles-js", "/path/to/particles.json", (container) => {
+  console.log("loaded", container);
+});
+```
+
+Under the hood this calls `tsParticles.load({ id, url })` and passes the container to the callback.
+
+## Accessing the container
+
+`particlesJS()` returns a `Promise<Container | undefined>`. You can `await` it to get the tsParticles container and use the full tsParticles API.
+
+```javascript
+(async (engine) => {
+  await initPjs(engine);
+
+  const container = await particlesJS("particles-js", { /* config */ });
+
+  // Use the tsParticles API directly
+  container.pause();
+  container.play();
+})(tsParticles);
+```
+
+## Registering a click handler
+
+```javascript
+particlesJS.setOnClickHandler((event, particles) => {
+  console.log("clicked", particles);
+});
+```
+
+## Alternative: Particles.init()
+
+The package also exposes a `Particles.init()` API modelled after the `marcbruederlin/particles.js` library. This API accepts a different option structure:
+
+```javascript
+(async (engine) => {
+  await initPjs(engine);
+
+  Particles.init({
+    selector: "#particles-js",   // Required: CSS selector for the canvas
+    maxParticles: 100,
+    sizeVariations: 3,
+    speed: 0.5,
+    color: "#000000",
+    minDistance: 120,
+    connectParticles: false,
+  });
+})(tsParticles);
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selector` | string | — | **Required.** CSS selector for the canvas element. |
+| `maxParticles` | integer | `100` | Maximum number of particles. |
+| `sizeVariations` | integer | `3` | Number of distinct size values. |
+| `speed` | number | `0.5` | Movement speed. |
+| `color` | string or string[] | `"#000000"` | Particle and link colour(s). |
+| `minDistance` | integer | `120` | Distance in px at which particles draw connecting lines. |
+| `connectParticles` | boolean | `false` | Whether to draw connecting lines. |
+| `responsive` | array | `null` | Breakpoint-specific option overrides. |
+
+## Moving beyond compatibility
+
+Once your particles.js config is working under the compatibility layer, you can incrementally adopt native tsParticles options to access features unavailable in particles.js. The tsParticles option format uses camelCase keys and a more structured hierarchy.
+
+<Tip>
+  The [interactive demo and configuration editor](https://particles.js.org/samples) at particles.js.org lets you visually build tsParticles configs and export them as JSON, which is a good starting point when rewriting a legacy config from scratch.
+</Tip>
+
+### Equivalent tsParticles config
+
+A particles.js config like this:
+
+```javascript
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 80, density: { enable: true, value_area: 800 } },
+    color: { value: "#ffffff" },
+    shape: { type: "circle" },
+    opacity: { value: 0.5 },
+    size: { value: 3, random: true },
+    line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+    move: { enable: true, speed: 6, direction: "none", out_mode: "out" },
+  },
+  interactivity: {
+    events: {
+      onhover: { enable: true, mode: "repulse" },
+      onclick: { enable: true, mode: "push" },
+    },
+  },
+  retina_detect: true,
+});
+```
+
+Written directly in tsParticles format:
+
+```javascript
+await tsParticles.load({
+  id: "particles-js",
+  options: {
+    detectRetina: true,
+    particles: {
+      number: { value: 80, density: { enable: true, width: 800 } },
+      color: { value: "#ffffff" },
+      shape: { type: "circle" },
+      opacity: { value: 0.5 },
+      size: { value: { min: 0, max: 3 } },
+      links: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+      move: { enable: true, speed: 2, direction: "none", outModes: "out" },
+    },
+    interactivity: {
+      events: {
+        onHover: { enable: true, mode: "repulse" },
+        onClick: { enable: true, mode: "push" },
+      },
+    },
+  },
+});
+```
+
+Key differences to note:
+
+- `line_linked` → `links`
+- `out_mode` → `outModes`
+- `onhover` / `onclick` → `onHover` / `onClick`
+- `size.random: true` → `size.value: { min: 0, max: 3 }`
+- `move.speed: 6` → `move.speed: 2` (tsParticles speed scale differs)
+- `number.density.value_area` → `number.density.width`

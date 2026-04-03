@@ -1,0 +1,677 @@
+---
+title: "Particles options reference"
+description: "Complete reference for the IParticlesOptions interface — the particles sub-object in tsParticles configuration."
+keywords: ["particles", "IParticlesOptions", "move", "number", "opacity", "size", "shape", "fill", "stroke", "bounce", "zIndex"]
+---
+
+The `particles` key at the top level of your options object controls every aspect of the particle population. It maps to the `IParticlesOptions` interface.
+
+```json
+{
+  "particles": {
+    "number": { "value": 80 },
+    "move": { "enable": true, "speed": 2 },
+    "size": { "value": 3 },
+    "opacity": { "value": 0.8 },
+    "shape": { "type": "circle" },
+    "fill": { "enable": true },
+    "stroke": { "width": 0 }
+  }
+}
+```
+
+<Info>
+  All properties are optional. Unset values fall back to the defaults set in `ParticlesOptions.ts`.
+</Info>
+
+---
+
+## Top-level properties
+
+<ParamField path="particles.reduceDuplicates" type="boolean" default="false">
+  When `true`, the particle index (rather than a random value) is used when selecting from option arrays. This ensures each particle gets a distinct entry from arrays like `shape.type` or `fill.color.value`, cycling through them sequentially.
+
+  ```json
+  { "particles": { "reduceDuplicates": true } }
+  ```
+</ParamField>
+
+<ParamField path="particles.groups" type="ParticlesGroups" default="{}">
+  A dictionary of named particle groups. Each key is a group name and its value is a partial `IParticlesOptions` override. Groups are referenced by emitter and other plugins to spawn particles with distinct configurations within the same container.
+
+  ```json
+  {
+    "particles": {
+      "groups": {
+        "large": { "size": { "value": 10 }, "number": { "value": 5 } },
+        "small": { "size": { "value": 2 }, "number": { "value": 50 } }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## bounce
+
+Controls the elasticity of particle motion when a particle bounces off a canvas boundary or another particle.
+
+<ParamField path="particles.bounce" type="IParticlesBounce">
+  <Expandable title="IParticlesBounce properties">
+    <ParamField path="bounce.horizontal" type="IValueWithRandom">
+      Bounce coefficient for horizontal collisions. `value` of `1.0` means a perfectly elastic bounce (no energy loss). Values below `1` reduce horizontal velocity on each bounce.
+
+      ```json
+      { "horizontal": { "value": 1 } }
+      ```
+    </ParamField>
+    <ParamField path="bounce.vertical" type="IValueWithRandom">
+      Bounce coefficient for vertical collisions. Works identically to `horizontal`.
+
+      ```json
+      { "vertical": { "value": 1 } }
+      ```
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "bounce": {
+        "horizontal": { "value": 1 },
+        "vertical": { "value": 1 }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## effect
+
+Configures an effect layer drawn in addition to (or instead of) the particle shape. Effects are registered as plugins with a string type key.
+
+<ParamField path="particles.effect" type="IEffect">
+  <Expandable title="IEffect properties">
+    <ParamField path="effect.type" type="string | string[]">
+      The registered effect type name(s). When an array is provided, each particle picks one entry based on its index and `reduceDuplicates`.
+    </ParamField>
+    <ParamField path="effect.close" type="boolean" default="true">
+      Whether the effect drawing path is closed before painting.
+    </ParamField>
+    <ParamField path="effect.options" type="object">
+      Shape-specific extra data keyed by effect type. The value at each key is passed to the corresponding effect drawer as `IShapeValues[]`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+---
+
+## fill
+
+Controls whether particles are painted with a solid fill color and at what opacity.
+
+<ParamField path="particles.fill" type="IFill | IFill[]">
+  Can be a single fill configuration or an array for per-particle variation.
+
+  <Expandable title="IFill properties">
+    <ParamField path="fill.enable" type="boolean" default="true">
+      Enables or disables the fill. When `false`, only the stroke is drawn (hollow particles).
+    </ParamField>
+    <ParamField path="fill.color" type="RecursivePartial<IAnimatableColor> | RecursivePartial<IRangeColor>">
+      The fill color. Accepts a CSS color string, a color object with a `value` key, or an animatable color object.
+
+      ```json
+      { "fill": { "color": { "value": "#ff0000" } } }
+      ```
+    </ParamField>
+    <ParamField path="fill.opacity" type="number | IRangeValue">
+      Fill-specific opacity, applied in addition to the base particle opacity. Accepts a fixed number or a range.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "fill": {
+        "enable": true,
+        "color": { "value": ["#ff0000", "#00ff00", "#0000ff"] },
+        "opacity": 1
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## move
+
+Controls particle movement — speed, direction, gravity, boundary behavior, and more.
+
+<ParamField path="particles.move" type="IMove">
+  <Expandable title="IMove properties" defaultOpen>
+    <ParamField path="move.enable" type="boolean" default="false">
+      Master switch for particle movement. When `false`, all other `move` properties are ignored and particles remain stationary.
+    </ParamField>
+
+    <ParamField path="move.speed" type="number | IRangeValue" default="2">
+      The base movement speed of particles in pixels per frame. Accepts a fixed value or a `{ min, max }` range for per-particle random speeds.
+
+      ```json
+      { "move": { "enable": true, "speed": { "min": 1, "max": 5 } } }
+      ```
+    </ParamField>
+
+    <ParamField path="move.direction" type="string | number" default='"none"'>
+      The primary direction of movement. Accepts a `MoveDirection` enum key or a numeric angle in degrees.
+
+      Valid string values: `"none"`, `"top"`, `"top-right"`, `"right"`, `"bottom-right"`, `"bottom"`, `"bottom-left"`, `"left"`, `"top-left"`, `"inside"`, `"outside"`.
+    </ParamField>
+
+    <ParamField path="move.random" type="boolean" default="false">
+      When `true`, each particle's speed is randomized between `0` and the configured `speed` value.
+    </ParamField>
+
+    <ParamField path="move.straight" type="boolean" default="false">
+      When `true`, particles travel in a perfectly straight line without any angular spread. When `false`, the `angle` spread is applied.
+    </ParamField>
+
+    <ParamField path="move.decay" type="number | IRangeValue" default="0">
+      A speed decay multiplier applied per frame. A value of `0.05` reduces the speed by 5% each frame, causing particles to decelerate and eventually stop.
+    </ParamField>
+
+    <ParamField path="move.drift" type="number | IRangeValue" default="0">
+      A horizontal drift force applied continuously. Positive values drift right; negative values drift left.
+    </ParamField>
+
+    <ParamField path="move.size" type="boolean" default="false">
+      When `true`, larger particles move proportionally faster than smaller ones.
+    </ParamField>
+
+    <ParamField path="move.vibrate" type="boolean" default="false">
+      When `true`, particles vibrate (jitter) in place while still following their movement path.
+    </ParamField>
+
+    <ParamField path="move.warp" type="boolean" default="false">
+      When `true`, a particle that exits one edge of the canvas reappears at the same coordinates on the opposite edge. When `false`, the particle is re-spawned at a random position.
+    </ParamField>
+
+    <ParamField path="move.angle" type="number | IMoveAngle">
+      The angular spread around the movement direction in degrees. Particles pick a random angle within `direction ± (angle.value / 2)`.
+
+      <Expandable title="IMoveAngle properties">
+        <ParamField path="move.angle.value" type="number | IRangeValue" default="90">
+          The total angular spread in degrees.
+        </ParamField>
+        <ParamField path="move.angle.offset" type="number | IRangeValue" default="0">
+          Rotates the center of the spread by this many degrees.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="move.outModes" type="string | IOutModes">
+      Controls what happens when a particle reaches a canvas edge.
+
+      <Expandable title="IOutModes properties">
+        <ParamField path="move.outModes.default" type="string" default='"out"'>
+          The default behavior for all four edges. Valid values: `"out"` (particle exits and re-spawns), `"bounce"` (elastic reflection), `"bounce-vertical"`, `"bounce-horizontal"`, `"destroy"` (particle is removed), `"none"` (particle continues off-screen).
+        </ParamField>
+        <ParamField path="move.outModes.top" type="string">Override for the top edge.</ParamField>
+        <ParamField path="move.outModes.bottom" type="string">Override for the bottom edge.</ParamField>
+        <ParamField path="move.outModes.left" type="string">Override for the left edge.</ParamField>
+        <ParamField path="move.outModes.right" type="string">Override for the right edge.</ParamField>
+      </Expandable>
+
+      ```json
+      { "move": { "outModes": { "default": "bounce" } } }
+      ```
+    </ParamField>
+
+    <ParamField path="move.gravity" type="IMoveGravity">
+      Applies a gravitational acceleration to particle movement.
+
+      <Expandable title="IMoveGravity properties">
+        <ParamField path="gravity.enable" type="boolean" default="false">
+          Enables gravity simulation.
+        </ParamField>
+        <ParamField path="gravity.acceleration" type="number" default="9.81">
+          The gravitational acceleration in pixels per second squared.
+        </ParamField>
+        <ParamField path="gravity.inverse" type="boolean" default="false">
+          When `true`, gravity pulls upward instead of downward.
+        </ParamField>
+        <ParamField path="gravity.maxSpeed" type="number" default="50">
+          The terminal velocity cap in pixels per second.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="move.center" type="IMoveCenter">
+      The point used as the center for `inside`/`outside` directions and spin calculations.
+
+      <Expandable title="IMoveCenter properties">
+        <ParamField path="center.x" type="number" default="50">X position as a percentage of canvas width.</ParamField>
+        <ParamField path="center.y" type="number" default="50">Y position as a percentage of canvas height.</ParamField>
+        <ParamField path="center.radius" type="number" default="0">Radius around the center point.</ParamField>
+        <ParamField path="center.mode" type="string" default='"percent"'>Coordinate mode: `"percent"` or `"precise"`.</ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="move.spin" type="ISpin">
+      Configures particles to orbit around a center point.
+
+      <Expandable title="ISpin properties">
+        <ParamField path="spin.enable" type="boolean" default="false">Enables spin movement.</ParamField>
+        <ParamField path="spin.acceleration" type="number | IRangeValue" default="0">Angular acceleration in radians per second squared.</ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="move.path" type="IMovePath">
+      Configures path-following movement. Requires a path plugin (e.g. `@tsparticles/path-*`).
+
+      <Expandable title="IMovePath properties">
+        <ParamField path="path.enable" type="boolean" default="false">Enables path-following movement.</ParamField>
+        <ParamField path="path.delay" type="number | IRangeValue" default="0">Delay in seconds before path updates.</ParamField>
+        <ParamField path="path.clamp" type="boolean" default="true">When `true`, path coordinates are clamped to the canvas.</ParamField>
+        <ParamField path="path.options" type="object">Plugin-specific path configuration.</ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="move.distance" type="number | Partial<IDistance>">
+      Limits movement distance. A single number sets both horizontal and vertical limits.
+
+      <Expandable title="IDistance properties">
+        <ParamField path="distance.horizontal" type="number">Maximum horizontal travel distance in pixels.</ParamField>
+        <ParamField path="distance.vertical" type="number">Maximum vertical travel distance in pixels.</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "move": {
+        "enable": true,
+        "speed": 3,
+        "direction": "none",
+        "random": true,
+        "straight": false,
+        "outModes": { "default": "out" },
+        "warp": false
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## number
+
+Controls how many particles exist and how density scales with the canvas size.
+
+<ParamField path="particles.number" type="IParticlesNumber">
+  <Expandable title="IParticlesNumber properties" defaultOpen>
+    <ParamField path="number.value" type="number" default="0">
+      The target number of particles. The engine creates exactly this many particles unless density is enabled.
+    </ParamField>
+
+    <ParamField path="number.density" type="IParticlesDensity">
+      Scales the particle count based on the canvas area.
+
+      <Expandable title="IParticlesDensity properties">
+        <ParamField path="density.enable" type="boolean" default="false">
+          When `true`, `number.value` is treated as a count per `width × height` area and automatically adjusted for the actual canvas size.
+        </ParamField>
+        <ParamField path="density.width" type="number" default="1920">
+          Reference canvas width in pixels used for density calculation.
+        </ParamField>
+        <ParamField path="density.height" type="number" default="1080">
+          Reference canvas height in pixels used for density calculation.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField path="number.limit" type="IParticlesNumberLimit">
+      Constrains the maximum number of particles at runtime.
+
+      <Expandable title="IParticlesNumberLimit properties">
+        <ParamField path="limit.value" type="number" default="0">
+          Maximum number of simultaneous particles. `0` means no limit.
+        </ParamField>
+        <ParamField path="limit.mode" type="string" default='"none"'>
+          What happens when the limit is reached. `"none"`: new particles are refused. `"delete"`: the oldest particle is removed to make room.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "number": {
+        "value": 100,
+        "density": { "enable": true, "width": 1920, "height": 1080 },
+        "limit": { "value": 200, "mode": "delete" }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## opacity
+
+Controls particle opacity and optional fade animation.
+
+<ParamField path="particles.opacity" type="IOpacity">
+  `IOpacity` extends `IValueWithRandom`, so it inherits the `value` field.
+
+  <Expandable title="IOpacity properties" defaultOpen>
+    <ParamField path="opacity.value" type="number | IRangeValue" default="1">
+      The base opacity of particles. Accepts a fixed value between `0` and `1`, or a `{ min, max }` range for per-particle randomization.
+
+      ```json
+      { "opacity": { "value": { "min": 0.3, "max": 1 } } }
+      ```
+    </ParamField>
+
+    <ParamField path="opacity.animation" type="IOpacityAnimation">
+      Animates the opacity over time.
+
+      <Expandable title="IOpacityAnimation properties">
+        <ParamField path="animation.enable" type="boolean" default="false">
+          Enables opacity animation.
+        </ParamField>
+        <ParamField path="animation.speed" type="number | IRangeValue" default="3">
+          The rate of change in opacity units per second.
+        </ParamField>
+        <ParamField path="animation.decay" type="number | IRangeValue" default="0">
+          Speed decay applied per animation cycle.
+        </ParamField>
+        <ParamField path="animation.delay" type="number | IRangeValue" default="0">
+          Delay in seconds before the opacity animation begins.
+        </ParamField>
+        <ParamField path="animation.count" type="number | IRangeValue" default="0">
+          Number of animation cycles before stopping. `0` loops indefinitely.
+        </ParamField>
+        <ParamField path="animation.sync" type="boolean" default="false">
+          When `true`, all particles animate in sync.
+        </ParamField>
+        <ParamField path="animation.mode" type="string" default='"auto"'>
+          Animation oscillation mode: `"auto"` (reverses at limits), `"increase"`, `"decrease"`, `"random"`.
+        </ParamField>
+        <ParamField path="animation.startValue" type="string" default='"random"'>
+          The starting point of the animation cycle: `"min"`, `"max"`, `"random"`.
+        </ParamField>
+        <ParamField path="animation.destroy" type="string" default='"none"'>
+          Whether to destroy the particle when the animation reaches a boundary: `"none"`, `"min"`, `"max"`.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "opacity": {
+        "value": { "min": 0.1, "max": 1 },
+        "animation": {
+          "enable": true,
+          "speed": 1,
+          "sync": false
+        }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## shape
+
+Controls the visual shape of each particle.
+
+<ParamField path="particles.shape" type="IShape">
+  <Expandable title="IShape properties" defaultOpen>
+    <ParamField path="shape.type" type="string | string[]" default='"circle"'>
+      The shape type name or an array of type names. Built-in types include `"circle"`, `"square"`, `"triangle"`, `"star"`, `"polygon"`, `"char"`, `"image"`. Additional shapes are registered by shape plugins. When an array is given, each particle picks one entry.
+
+      ```json
+      { "shape": { "type": ["circle", "square", "triangle"] } }
+      ```
+    </ParamField>
+
+    <ParamField path="shape.close" type="boolean" default="true">
+      When `true`, the shape path is closed (joined end-to-end) before being stroked or filled. Set to `false` for open shapes like arcs.
+    </ParamField>
+
+    <ParamField path="shape.options" type="ShapeData">
+      A dictionary of shape-specific configuration. The key is a shape type name, and the value is an array of configuration objects passed to the shape drawer.
+
+      ```json
+      {
+        "shape": {
+          "type": "char",
+          "options": {
+            "char": [
+              { "value": "★", "font": "Arial", "style": "", "weight": "400" }
+            ]
+          }
+        }
+      }
+      ```
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+---
+
+## size
+
+Controls particle size and optional growth/shrink animation.
+
+<ParamField path="particles.size" type="ISize">
+  `ISize` extends `IValueWithRandom`.
+
+  <Expandable title="ISize properties" defaultOpen>
+    <ParamField path="size.value" type="number | IRangeValue" default="3">
+      The base radius of particles in pixels. Accepts a fixed value or a `{ min, max }` range for per-particle randomization.
+
+      ```json
+      { "size": { "value": { "min": 1, "max": 5 } } }
+      ```
+    </ParamField>
+
+    <ParamField path="size.animation" type="ISizeAnimation">
+      Animates the particle size over time. `ISizeAnimation` extends `IRangedAnimation`.
+
+      <Expandable title="ISizeAnimation properties">
+        <ParamField path="animation.enable" type="boolean" default="false">
+          Enables size animation.
+        </ParamField>
+        <ParamField path="animation.speed" type="number | IRangeValue" default="5">
+          The rate of size change in pixels per second.
+        </ParamField>
+        <ParamField path="animation.decay" type="number | IRangeValue" default="0">
+          Speed decay applied per animation cycle.
+        </ParamField>
+        <ParamField path="animation.delay" type="number | IRangeValue" default="0">
+          Delay in seconds before the animation starts.
+        </ParamField>
+        <ParamField path="animation.count" type="number | IRangeValue" default="0">
+          Number of animation cycles. `0` loops indefinitely.
+        </ParamField>
+        <ParamField path="animation.sync" type="boolean" default="false">
+          When `true`, all particles animate in sync.
+        </ParamField>
+        <ParamField path="animation.mode" type="string" default='"auto"'>
+          Oscillation mode: `"auto"`, `"increase"`, `"decrease"`, `"random"`.
+        </ParamField>
+        <ParamField path="animation.startValue" type="string" default='"random"'>
+          Starting point: `"min"`, `"max"`, `"random"`.
+        </ParamField>
+        <ParamField path="animation.destroy" type="string" default='"none"'>
+          Destruction trigger: `"none"`, `"min"`, `"max"`.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "size": {
+        "value": { "min": 1, "max": 8 },
+        "animation": {
+          "enable": true,
+          "speed": 4,
+          "sync": false,
+          "destroy": "min"
+        }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## stroke
+
+Draws an outline around each particle. Can be a single stroke definition or an array for per-particle variation.
+
+<ParamField path="particles.stroke" type="IStroke | IStroke[]">
+  <Expandable title="IStroke properties">
+    <ParamField path="stroke.width" type="number | IRangeValue" default="0">
+      The stroke line width in pixels. A value of `0` disables the stroke.
+    </ParamField>
+    <ParamField path="stroke.color" type="RecursivePartial<IAnimatableColor> | RecursivePartial<IRangeColor>">
+      The stroke color. Accepts a CSS color string or a color object.
+
+      ```json
+      { "stroke": { "color": { "value": "#ffffff" } } }
+      ```
+    </ParamField>
+    <ParamField path="stroke.opacity" type="number | IRangeValue">
+      Stroke-specific opacity, applied in addition to the base particle opacity.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "stroke": {
+        "width": 2,
+        "color": { "value": "#ffffff" },
+        "opacity": 0.5
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## zIndex
+
+Controls the depth-based scaling of opacity, size, and speed for individual particles.
+
+<ParamField path="particles.zIndex" type="IZIndex">
+  `IZIndex` extends `IValueWithRandom`.
+
+  <Expandable title="IZIndex properties">
+    <ParamField path="zIndex.value" type="number | IRangeValue" default="0">
+      The z-position assigned to each particle. Accepts a fixed value or a range. Particles are placed at `clamp(value, 0, container.zLayers)`.
+    </ParamField>
+    <ParamField path="zIndex.opacityRate" type="number" default="1">
+      Scales how much depth (z-position) affects the particle's opacity. A value of `1` means full depth-based opacity modulation; `0` disables the effect.
+    </ParamField>
+    <ParamField path="zIndex.sizeRate" type="number" default="1">
+      Scales how much depth affects the particle's rendered size. Higher values make far particles visibly smaller.
+    </ParamField>
+    <ParamField path="zIndex.velocityRate" type="number" default="1">
+      Scales how much depth affects the particle's movement speed. Higher values slow down far particles.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "particles": {
+      "zIndex": {
+        "value": { "min": 0, "max": 100 },
+        "opacityRate": 0.5,
+        "sizeRate": 1,
+        "velocityRate": 1
+      }
+    }
+  }
+  ```
+</ParamField>
+
+---
+
+## TypeScript interface
+
+```typescript
+export interface IParticlesOptions {
+  [name: string]: unknown;
+
+  bounce: IParticlesBounce;
+  effect: IEffect;
+  fill: SingleOrMultiple<IFill>;
+  groups: ParticlesGroups;
+  move: IMove;
+  number: IParticlesNumber;
+  opacity: IOpacity;
+  reduceDuplicates: boolean;
+  shape: IShape;
+  size: ISize;
+  stroke: SingleOrMultiple<IStroke>;
+  zIndex: IZIndex;
+}
+```
+
+---
+
+## Default values
+
+| Option                        | Default     |
+| ----------------------------- | ----------- |
+| `bounce.horizontal.value`     | `1`         |
+| `bounce.vertical.value`       | `1`         |
+| `fill.enable`                 | `true`      |
+| `move.enable`                 | `false`     |
+| `move.speed`                  | `2`         |
+| `move.direction`              | `"none"`    |
+| `move.random`                 | `false`     |
+| `move.straight`               | `false`     |
+| `move.outModes.default`       | `"out"`     |
+| `move.decay`                  | `0`         |
+| `move.drift`                  | `0`         |
+| `move.warp`                   | `false`     |
+| `move.vibrate`                | `false`     |
+| `move.size`                   | `false`     |
+| `number.value`                | `0`         |
+| `number.density.enable`       | `false`     |
+| `number.density.width`        | `1920`      |
+| `number.density.height`       | `1080`      |
+| `number.limit.value`          | `0`         |
+| `number.limit.mode`           | `"none"`    |
+| `opacity.value`               | `1`         |
+| `opacity.animation.enable`    | `false`     |
+| `reduceDuplicates`            | `false`     |
+| `shape.type`                  | `"circle"`  |
+| `shape.close`                 | `true`      |
+| `size.value`                  | `3`         |
+| `size.animation.enable`       | `false`     |
+| `stroke.width`                | `0`         |
+| `zIndex.value`                | `0`         |
+| `zIndex.opacityRate`          | `1`         |
+| `zIndex.sizeRate`             | `1`         |
+| `zIndex.velocityRate`         | `1`         |

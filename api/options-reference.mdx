@@ -1,0 +1,323 @@
+---
+title: "Options reference"
+description: "Complete reference for the top-level IOptions interface accepted by tsParticles.load()."
+keywords: ["options", "configuration", "IOptions", "autoPlay", "fpsLimit", "fullScreen", "background", "particles"]
+---
+
+The top-level options object — typed as `ISourceOptions` (`RecursivePartial<IOptions>`) — is passed to [`tsParticles.load()`](/api/engine#load). Every property is optional. Unset properties fall back to the defaults listed below.
+
+```typescript
+// ISourceOptions is a deep-partial of IOptions
+type ISourceOptions = RecursivePartial<IOptions>;
+```
+
+<Tip>
+  All properties documented here map directly to the `IOptions` interface in `engine/src/Options/Interfaces/IOptions.ts`. Defaults are taken from `Options.ts`.
+</Tip>
+
+---
+
+## Complete example
+
+```json
+{
+  "autoPlay": true,
+  "background": {
+    "color": "#000000",
+    "image": "",
+    "opacity": 1,
+    "position": "50% 50%",
+    "repeat": "no-repeat",
+    "size": "cover"
+  },
+  "clear": true,
+  "delay": 0,
+  "detectRetina": true,
+  "duration": 0,
+  "fpsLimit": 120,
+  "fullScreen": {
+    "enable": false,
+    "zIndex": 0
+  },
+  "hdr": true,
+  "particles": {},
+  "pauseOnBlur": true,
+  "pauseOnOutsideViewport": true,
+  "preset": null,
+  "resize": {
+    "delay": 0.5,
+    "enable": true
+  },
+  "smooth": false,
+  "style": {},
+  "zLayers": 100
+}
+```
+
+---
+
+## Options
+
+<ParamField path="autoPlay" type="boolean" default="true">
+  Controls whether the animation starts automatically after `tsParticles.load()` resolves. Set to `false` to start the animation manually by calling [`container.play()`](/api/container#play).
+
+  ```json
+  { "autoPlay": false }
+  ```
+</ParamField>
+
+<ParamField path="background" type="IBackground">
+  CSS background properties applied directly to the canvas element's `style`. These are style properties, not drawn content.
+
+  <Expandable title="IBackground properties">
+    <ParamField path="background.color" type="string | IOptionsColor" default='""'>
+      Maps to the canvas `background-color` CSS property. Accepts a CSS color string (`"#ff0000"`, `"rgba(0,0,0,0.5)"`) or a color object.
+    </ParamField>
+    <ParamField path="background.image" type="string" default='""'>
+      Maps to the canvas `background-image` CSS property. Use the `url()` CSS function syntax: `"url('/path/to/bg.jpg')"`.
+    </ParamField>
+    <ParamField path="background.opacity" type="number" default="1">
+      Opacity multiplier applied to the `color` value. Accepts values between `0` and `1`.
+    </ParamField>
+    <ParamField path="background.position" type="string" default='""'>
+      Maps to the canvas `background-position` CSS property (e.g. `"center"`, `"50% 50%"`).
+    </ParamField>
+    <ParamField path="background.repeat" type="string" default='""'>
+      Maps to the canvas `background-repeat` CSS property (e.g. `"no-repeat"`, `"repeat-x"`).
+    </ParamField>
+    <ParamField path="background.size" type="string" default='""'>
+      Maps to the canvas `background-size` CSS property (e.g. `"cover"`, `"contain"`, `"100% 100%"`).
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "background": {
+      "color": "#0d0d0d",
+      "opacity": 1
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="clear" type="boolean" default="true">
+  When `true`, the canvas is cleared before drawing each frame. Set to `false` to produce a trail effect where particles leave a persistent trace.
+
+  ```json
+  { "clear": false }
+  ```
+</ParamField>
+
+<ParamField path="delay" type="number | IRangeValue" default="0">
+  The number of seconds to wait before the container begins its animation after `start()` is called. Accepts a fixed number or a range object `{ "min": 0, "max": 2 }` for a randomized delay.
+
+  ```typescript
+  type RangeValue = number | { min: number; max: number };
+  ```
+
+  ```json
+  { "delay": 1.5 }
+  ```
+</ParamField>
+
+<ParamField path="detectRetina" type="boolean" default="true">
+  When `true`, the canvas resolution scales with the device pixel ratio, producing crisp rendering on high-DPI displays. Set to `false` to always use a 1:1 pixel ratio.
+
+  ```json
+  { "detectRetina": false }
+  ```
+</ParamField>
+
+<ParamField path="duration" type="number | IRangeValue" default="0">
+  The lifetime of the container in seconds. When the accumulated lifetime exceeds this value, the container calls [`destroy()`](/api/container#destroy) on itself. A value of `0` means the container runs indefinitely.
+
+  ```json
+  { "duration": 10 }
+  ```
+</ParamField>
+
+<ParamField path="fpsLimit" type="number" default="120">
+  The maximum frames per second for the animation loop. The engine skips frames that would exceed this rate. Set lower values (e.g. `60`) to reduce CPU/GPU usage. Values below the engine's minimum (enforced internally) are clamped to `60`.
+
+  ```json
+  { "fpsLimit": 60 }
+  ```
+</ParamField>
+
+<ParamField path="fullScreen" type="boolean | RecursivePartial<IFullScreen>" default="false">
+  Configures the canvas as a full-window background layer using CSS `fixed` positioning. Pass `true` as a shorthand for `{ "enable": true }`.
+
+  <Expandable title="IFullScreen properties">
+    <ParamField path="fullScreen.enable" type="boolean" default="false">
+      When `true`, the canvas is stretched to fill the entire viewport and positioned behind page content.
+    </ParamField>
+    <ParamField path="fullScreen.zIndex" type="number" default="0">
+      The CSS `z-index` applied to the canvas. Set to a negative value (e.g. `-1`) to place the canvas behind all page content. When negative, mouse interactions require `interactivity.detectsOn` to be set to `"window"`.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  { "fullScreen": { "enable": true, "zIndex": -1 } }
+  ```
+</ParamField>
+
+<ParamField path="hdr" type="boolean" default="true">
+  Enables high-color-precision rendering for particle colors. When `true`, the canvas uses a wider color gamut where supported by the browser and display. Disable for maximum compatibility or when precise HDR output is not needed.
+
+  ```json
+  { "hdr": false }
+  ```
+</ParamField>
+
+<ParamField path="key" type="string">
+  An optional key used to identify this configuration. Used as a lookup key when managing multiple named configurations. Not required for normal usage.
+</ParamField>
+
+<ParamField path="name" type="string">
+  A human-readable name for this configuration. Displayed in developer tools and used as a fallback when `key` is absent.
+</ParamField>
+
+<ParamField path="particles" type="IParticlesOptions">
+  Options controlling the particle population — number, movement, appearance, shape, and more. See the [Particles options reference](/api/particles-options) for the full breakdown.
+
+  ```json
+  {
+    "particles": {
+      "number": { "value": 80 },
+      "move": { "enable": true, "speed": 2 }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="pauseOnBlur" type="boolean" default="true">
+  When `true`, the animation is paused automatically when the browser tab loses focus and resumed when focus returns. Useful for reducing background CPU consumption.
+
+  ```json
+  { "pauseOnBlur": false }
+  ```
+</ParamField>
+
+<ParamField path="pauseOnOutsideViewport" type="boolean" default="true">
+  When `true`, the animation pauses when the canvas element is scrolled out of the viewport and resumes when it scrolls back into view. Uses the `IntersectionObserver` API.
+
+  ```json
+  { "pauseOnOutsideViewport": false }
+  ```
+</ParamField>
+
+<ParamField path="preset" type="string | string[]">
+  The name or names of registered presets to apply before merging user-supplied options. Presets are registered via `engine.pluginManager` and load their own default options. Subsequent properties in the options object override preset values.
+
+  ```json
+  { "preset": "confetti" }
+  ```
+</ParamField>
+
+<ParamField path="resize" type="IResizeEvent">
+  Controls how the container responds to canvas resize events.
+
+  <Expandable title="IResizeEvent properties">
+    <ParamField path="resize.enable" type="boolean" default="true">
+      When `true`, the container listens for window resize events and redraws the canvas to match the new dimensions.
+    </ParamField>
+    <ParamField path="resize.delay" type="number" default="0.5">
+      Debounce delay in seconds between resize events and the canvas re-initialization. Higher values reduce the frequency of expensive re-layouts during continuous resize.
+    </ParamField>
+  </Expandable>
+
+  ```json
+  {
+    "resize": {
+      "enable": true,
+      "delay": 0.5
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="smooth" type="boolean" default="false">
+  When `true`, the animation adjusts particle speed proportionally to the actual frame rate relative to `fpsLimit`. For example, with `fpsLimit: 60`, particles animate twice as fast on a 120 Hz display. Disabled by default because it changes the perceived speed based on hardware.
+
+  ```json
+  { "smooth": true }
+  ```
+
+  <Warning>
+    Enabling `smooth` causes visible speed differences across devices with different refresh rates. Use with care and test on representative hardware.
+  </Warning>
+</ParamField>
+
+<ParamField path="style" type="RecursivePartial<CSSStyleDeclaration>">
+  Additional CSS style properties applied directly to the canvas element. Accepts any valid CSS property in camelCase format. This is merged on top of styles set by `fullScreen` and `background`.
+
+  ```json
+  {
+    "style": {
+      "borderRadius": "12px",
+      "opacity": "0.8"
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="zLayers" type="number" default="100">
+  The total number of depth layers on the z-axis. Particle z-positions are mapped to the range `[0, zLayers]`. Higher values allow finer-grained depth distribution. Used in combination with `particles.zIndex` options.
+
+  ```json
+  { "zLayers": 200 }
+  ```
+</ParamField>
+
+---
+
+## TypeScript interface
+
+```typescript
+export interface IOptions {
+  [name: string]: unknown;
+
+  autoPlay: boolean;
+  background: IBackground;
+  clear: boolean;
+  delay: RangeValue;
+  detectRetina: boolean;
+  duration: RangeValue;
+  fpsLimit: number;
+  fullScreen: RecursivePartial<IFullScreen> | boolean;
+  hdr: boolean;
+  key?: string;
+  name?: string;
+  palette?: string;
+  particles: IParticlesOptions;
+  pauseOnBlur: boolean;
+  pauseOnOutsideViewport: boolean;
+  preset?: SingleOrMultiple<string>;
+  resize: IResizeEvent;
+  smooth: boolean;
+  style: RecursivePartial<CSSStyleDeclaration>;
+  zLayers: number;
+}
+```
+
+---
+
+## Default values
+
+| Option                    | Default   |
+| ------------------------- | --------- |
+| `autoPlay`                | `true`    |
+| `clear`                   | `true`    |
+| `delay`                   | `0`       |
+| `detectRetina`            | `true`    |
+| `duration`                | `0`       |
+| `fpsLimit`                | `120`     |
+| `fullScreen.enable`       | `true`    |
+| `fullScreen.zIndex`       | `0`       |
+| `hdr`                     | `true`    |
+| `pauseOnBlur`             | `true`    |
+| `pauseOnOutsideViewport`  | `true`    |
+| `resize.enable`           | `true`    |
+| `resize.delay`            | `0.5`     |
+| `smooth`                  | `false`   |
+| `zLayers`                 | `100`     |

@@ -1,122 +1,100 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "tsParticles",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#895ea6",
+    "light": "#201f1e",
+    "dark": "#2745a5"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/cba9071c-dbd5-46e3-b522-ccc7e7e86a9d.png",
+  "logo": {
+    "light": "https://media.brand.dev/d36d0adc-9aed-425c-8b64-74cafcc9011f.jpg",
+    "dark": "https://media.brand.dev/d36d0adc-9aed-425c-8b64-74cafcc9011f.jpg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/tsparticles/tsparticles"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/tsparticles/tsparticles"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "bundles"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Framework Integrations",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "integrations/react",
+              "integrations/vue",
+              "integrations/angular",
+              "integrations/svelte",
+              "integrations/other"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Configuration",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "configuration/options",
+              "configuration/particles",
+              "configuration/interactions",
+              "configuration/presets"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Plugins & Extensions",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "plugins/overview",
+              "plugins/shapes",
+              "plugins/paths",
+              "plugins/effects"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/confetti",
+              "guides/fireworks",
+              "guides/custom-plugin",
+              "guides/migration-from-particles-js"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Core",
             "pages": [
-              "api-reference/introduction"
+              "api/engine",
+              "api/container",
+              "api/particle"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Options",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/options-reference",
+              "api/particles-options"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

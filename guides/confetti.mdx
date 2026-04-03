@@ -1,0 +1,270 @@
+---
+title: "Confetti animations"
+description: "Add burst-style confetti effects to any page using the @tsparticles/confetti bundle."
+keywords: ["confetti", "tsparticles", "animation", "canvas-confetti"]
+---
+
+The `@tsparticles/confetti` bundle provides a `confetti()` function that is a drop-in compatible replacement for [canvas-confetti](https://github.com/catdad/canvas-confetti). Existing canvas-confetti code migrates without any changes.
+
+The bundle includes the tsParticles engine plus a curated set of shapes, updaters, and plugins needed to produce realistic confetti — rotating, tilting, rolling, and wobbling pieces that fade as they fall.
+
+## Installation
+
+<Tabs>
+  <Tab title="CDN">
+    Include the self-contained bundle. All dependencies are included in a single file.
+
+    ```html
+    <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@latest/tsparticles.confetti.bundle.min.js"></script>
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install @tsparticles/confetti
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @tsparticles/confetti
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @tsparticles/confetti
+    ```
+  </Tab>
+</Tabs>
+
+### Module import
+
+```typescript
+import { confetti } from "@tsparticles/confetti";
+```
+
+## Basic usage
+
+The simplest call launches 50 confetti pieces from the centre of the screen.
+
+```javascript
+confetti();
+```
+
+Always `await` the call in async contexts — the function returns a `Promise` that resolves to the underlying tsParticles `Container`.
+
+```javascript
+(async () => {
+  await confetti();
+})();
+```
+
+## Function signature
+
+```typescript
+function confetti(
+  idOrOptions: string | RecursivePartial<IConfettiOptions>,
+  confettiOptions?: RecursivePartial<IConfettiOptions>,
+): Promise<Container | undefined>
+```
+
+The first parameter is either:
+
+- An **id string** identifying the canvas element. Pass options as the second argument.
+- An **options object** directly, in which case the id defaults to `"confetti"`.
+
+### Static methods
+
+| Method | Description |
+|--------|-------------|
+| `confetti.create(canvas, options)` | Returns a confetti function bound to a specific `HTMLCanvasElement`. |
+| `confetti.init()` | Pre-initialises plugins without firing a burst. |
+| `confetti.version` | The package version string. |
+
+## Options reference
+
+All options are optional. Defaults match canvas-confetti.
+
+<ParamField body="count" type="integer" default="50">
+  Number of confetti pieces to launch per call. Higher values produce denser bursts but require more computation.
+</ParamField>
+
+<ParamField body="angle" type="number" default="90">
+  Launch angle in degrees. `90` is straight up. `0` fires to the right, `180` to the left.
+</ParamField>
+
+<ParamField body="spread" type="number" default="45">
+  Angular spread in degrees around the launch `angle`. A spread of `45` means pieces travel within ±22.5° of the target angle.
+</ParamField>
+
+<ParamField body="startVelocity" type="number" default="45">
+  Initial speed in pixels per frame. Higher values produce taller bursts.
+</ParamField>
+
+<ParamField body="decay" type="number" default="0.9">
+  Fraction of speed retained each frame. Must be between `0` and `1`. Values above `1` will cause pieces to accelerate indefinitely.
+</ParamField>
+
+<ParamField body="gravity" type="number" default="1">
+  Gravitational pull factor. `1` is Earth gravity, `0.5` is half gravity. Negative values make pieces float upward.
+</ParamField>
+
+<ParamField body="drift" type="number" default="0">
+  Horizontal drift applied each frame. Positive values push pieces to the right, negative to the left.
+</ParamField>
+
+<ParamField body="ticks" type="number" default="200">
+  Lifetime of each piece in animation frames. Increase this value if confetti disappears too quickly.
+</ParamField>
+
+<ParamField body="position" type="object">
+  Launch origin, expressed as a percentage of the viewport.
+
+  - `position.x` — `0` is the left edge, `100` is the right edge. Default: `50`.
+  - `position.y` — `0` is the top edge, `100` is the bottom edge. Default: `50`.
+</ParamField>
+
+<ParamField body="colors" type="string[]">
+  Array of hex colour strings (e.g. `"#ff0000"`). Defaults to a rainbow palette: `["#26ccff", "#a25afd", "#ff5e7e", "#88ff5a", "#fcff42", "#ffa62d", "#ff36ff"]`.
+</ParamField>
+
+<ParamField body="shapes" type="string | string[]" default='["square", "circle"]'>
+  One or more shape names for the confetti pieces. Available shapes:
+
+  `circle`, `square`, `star`, `polygon`, `image`, `heart`, `hearts`, `spades`, `clubs`, `diamonds`, `text`
+
+  Repeat a value to weight it higher — e.g. `["circle", "circle", "square"]` uses twice as many circles.
+</ParamField>
+
+<ParamField body="scalar" type="number" default="1">
+  Size multiplier for each piece. `0.5` produces half-sized pieces; `2` doubles their size.
+</ParamField>
+
+<ParamField body="zIndex" type="integer" default="100">
+  CSS `z-index` of the full-screen canvas.
+</ParamField>
+
+<ParamField body="disableForReducedMotion" type="boolean" default="true">
+  Suppresses all animation when the user has enabled the [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) media query.
+</ParamField>
+
+<ParamField body="flat" type="boolean" default="false">
+  Disables the 3-D tilt, roll, and wobble effects. Pieces fall straight without rotation.
+</ParamField>
+
+<Warning>
+  Keep `decay` strictly between `0` and `1`. Values at or above `1` mean pieces never slow down, which will degrade performance and prevent them from disappearing.
+</Warning>
+
+## Examples
+
+### Basic burst
+
+```javascript
+await confetti({
+  count: 100,
+  spread: 70,
+  origin: { y: 0.6 }, // canvas-confetti style — still accepted
+});
+```
+
+### Directional cannon
+
+Fire from the bottom-left corner toward the upper-right:
+
+```javascript
+await confetti({
+  angle: 60,
+  count: 80,
+  spread: 55,
+  position: { x: 0, y: 100 },
+  startVelocity: 60,
+});
+```
+
+### Emoji confetti
+
+Use the `text` shape with `shapeOptions` to render emoji as confetti pieces:
+
+```javascript
+await confetti({
+  count: 50,
+  spread: 60,
+  shapes: ["text"],
+  shapeOptions: {
+    text: {
+      value: ["🎉", "🎊", "✨"],
+    },
+  },
+});
+```
+
+### Continuous stream
+
+Call `confetti()` repeatedly on an interval to produce a sustained effect. The function reuses the same canvas when the same id is used.
+
+```javascript
+const end = Date.now() + 5000; // run for 5 seconds
+
+const interval = setInterval(async () => {
+  if (Date.now() > end) {
+    clearInterval(interval);
+    return;
+  }
+
+  await confetti({
+    count: 10,
+    spread: 30,
+    position: { x: Math.random() * 100, y: 0 },
+    startVelocity: 30,
+    gravity: 0.5,
+  });
+}, 200);
+```
+
+### Bound to a specific canvas
+
+Use `confetti.create()` to produce a scoped function that always targets a particular `<canvas>` element rather than the auto-generated full-screen one.
+
+```javascript
+const canvas = document.getElementById("my-canvas");
+const myConfetti = await confetti.create(canvas, {});
+
+// later
+await myConfetti({ count: 50, spread: 45 });
+```
+
+### Named instance with an id
+
+Providing an id as the first argument lets you fire multiple bursts to the same container:
+
+```javascript
+await confetti("celebration", { count: 50, angle: 60, position: { x: 20, y: 80 } });
+await confetti("celebration", { count: 50, angle: 120, position: { x: 80, y: 80 } });
+```
+
+## canvas-confetti compatibility
+
+<Note>
+  If you are already using canvas-confetti, you can swap the script tag or import without changing any other code. The `confetti()` function accepts the same option names and defaults, including the deprecated `particleCount` and `origin` aliases.
+</Note>
+
+| canvas-confetti option | tsParticles equivalent | Notes |
+|------------------------|------------------------|-------|
+| `particleCount` | `count` | Alias — still accepted but deprecated |
+| `origin.x` / `origin.y` | `position.x` / `position.y` | `origin` uses 0–1 range; `position` uses 0–100 |
+| All other options | Same name | Identical behaviour |
+
+## Included packages
+
+The bundle automatically loads the following packages. You do not need to import them separately.
+
+<AccordionGroup>
+  <Accordion title="Shapes">
+    `@tsparticles/shape-cards` (suits: hearts, spades, clubs, diamonds), `@tsparticles/shape-emoji`, `@tsparticles/shape-heart`, `@tsparticles/shape-image`, `@tsparticles/shape-polygon`, `@tsparticles/shape-square`, `@tsparticles/shape-star`
+  </Accordion>
+  <Accordion title="Updaters">
+    `@tsparticles/updater-life`, `@tsparticles/updater-roll`, `@tsparticles/updater-rotate`, `@tsparticles/updater-tilt`, `@tsparticles/updater-wobble`
+  </Accordion>
+  <Accordion title="Plugins">
+    `@tsparticles/plugin-emitters`, `@tsparticles/plugin-motion`
+  </Accordion>
+</AccordionGroup>

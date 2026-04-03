@@ -1,0 +1,616 @@
+---
+title: "Particle"
+description: "The Particle class represents a single animated particle within a Container."
+keywords: ["particle", "position", "velocity", "size", "color", "opacity", "shape"]
+---
+
+The `Particle` class holds all runtime state for a single particle — its position, velocity, visual properties, and references to its parent container. Each particle is managed by the [`ParticlesManager`](/api/container#particles) and is updated every animation frame.
+
+<Info>
+  Particle instances are created and recycled internally. You do not construct `Particle` objects directly. Access them through `container.particles.array`.
+</Info>
+
+```typescript
+// Iterate over all active particles in a container
+for (const particle of container.particles.array) {
+  console.log(particle.position.x, particle.position.y);
+}
+```
+
+---
+
+## Accessing particles
+
+```typescript
+// Get the first container
+const container = tsParticles.item(0);
+
+if (container) {
+  const particles = container.particles.array;
+
+  particles.forEach((p) => {
+    console.log(`id=${p.id}  x=${p.position.x.toFixed(1)}  y=${p.position.y.toFixed(1)}`);
+  });
+}
+```
+
+<Warning>
+  Do not store long-lived references to individual `Particle` objects. A particle is marked `destroyed = true` when it is removed, and its memory may be reused for a new particle.
+</Warning>
+
+---
+
+## Identity and lifecycle
+
+<ResponseField name="id" type="number">
+  A numeric identifier unique within the container's current population. The value starts at `0` and increments for each particle created during the container's lifetime.
+
+  ```typescript
+  id: number
+  ```
+</ResponseField>
+
+<ResponseField name="group" type="string | undefined">
+  The particle group key if this particle was spawned by a particle group configuration. `undefined` for top-level particles.
+
+  ```typescript
+  group?: string
+  ```
+</ResponseField>
+
+<ResponseField name="destroyed" type="boolean">
+  `true` when the particle has been removed from the simulation. A destroyed particle should not be read or modified.
+
+  ```typescript
+  destroyed: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="spawning" type="boolean">
+  `true` while the particle is in its initial spawn phase and not yet interactive.
+
+  ```typescript
+  spawning: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="unbreakable" type="boolean">
+  When `true`, collision interactions cannot destroy this particle.
+
+  ```typescript
+  unbreakable: boolean
+  ```
+</ResponseField>
+
+---
+
+## Position and movement
+
+<ResponseField name="position" type="Vector3d">
+  The particle's current position in canvas coordinates (pixels). `position.z` represents depth on the z-axis.
+
+  ```typescript
+  position: Vector3d
+  ```
+
+  ```typescript
+  // Move all particles 10 pixels to the right
+  for (const p of container.particles.array) {
+    p.position.x += 10;
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="initialPosition" type="Vector">
+  The position at which the particle was first placed. Useful for calculating displacement.
+
+  ```typescript
+  initialPosition: Vector
+  ```
+</ResponseField>
+
+<ResponseField name="velocity" type="Vector">
+  The particle's current velocity vector. `velocity.x` and `velocity.y` represent pixels-per-frame contributions in each axis.
+
+  ```typescript
+  velocity: Vector
+  ```
+</ResponseField>
+
+<ResponseField name="initialVelocity" type="Vector">
+  The velocity the particle had at the moment it was initialized.
+
+  ```typescript
+  initialVelocity: Vector
+  ```
+</ResponseField>
+
+<ResponseField name="direction" type="number">
+  The particle's movement direction expressed as an angle in radians.
+
+  ```typescript
+  direction: number
+  ```
+</ResponseField>
+
+<ResponseField name="offset" type="Vector">
+  A positional offset applied on top of `position`, used by parallax and interaction effects. Does not modify `position` directly.
+
+  ```typescript
+  offset: Vector
+  ```
+</ResponseField>
+
+<ResponseField name="moveCenter" type="ICenterCoordinates">
+  The center point used for `inside`/`outside` movement directions and spin calculations.
+
+  ```typescript
+  moveCenter: ICenterCoordinates
+  ```
+</ResponseField>
+
+<ResponseField name="misplaced" type="boolean">
+  `true` when the particle's position has been corrected after being out of bounds. The engine uses this flag to avoid re-processing already-corrected particles in the same frame.
+
+  ```typescript
+  misplaced: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="outType" type="ParticleOutType">
+  Describes how the particle exits the canvas: `normal`, `inside`, or `outside`.
+
+  ```typescript
+  outType: ParticleOutType
+  ```
+</ResponseField>
+
+<ResponseField name="pathRotation" type="boolean">
+  When `true`, the particle's rotation tracks its velocity direction (used by path plugins).
+
+  ```typescript
+  pathRotation: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="lastPathTime" type="number">
+  Timestamp of the last path update, used by path-following plugins to pace movement.
+
+  ```typescript
+  lastPathTime: number
+  ```
+</ResponseField>
+
+---
+
+## Visual properties
+
+<ResponseField name="size" type="IParticleNumericValueAnimation">
+  The particle's current size (radius in pixels). Includes the runtime animation state (current value, speed, direction).
+
+  ```typescript
+  size: IParticleNumericValueAnimation
+  ```
+
+  ```typescript
+  console.log(particle.getRadius()); // effective radius including bubble override
+  ```
+</ResponseField>
+
+<ResponseField name="opacity" type="IParticleNumericValueAnimation | undefined">
+  The base opacity animation state. Use [`getOpacity()`](#getopacity) to read the final computed opacity values including z-index and bubble effects.
+
+  ```typescript
+  opacity?: IParticleNumericValueAnimation
+  ```
+</ResponseField>
+
+<ResponseField name="fillColor" type="IParticleHslAnimation | undefined">
+  The particle's fill color in HSL format with an optional animation state.
+
+  ```typescript
+  fillColor?: IParticleHslAnimation
+  ```
+</ResponseField>
+
+<ResponseField name="fillEnabled" type="boolean | undefined">
+  When `false`, the particle interior is not painted (open/hollow shape).
+
+  ```typescript
+  fillEnabled?: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="fillOpacity" type="number | undefined">
+  Additional fill-specific opacity multiplier (separate from the base `opacity`).
+
+  ```typescript
+  fillOpacity?: number
+  ```
+</ResponseField>
+
+<ResponseField name="strokeColor" type="IParticleHslAnimation | undefined">
+  The particle's stroke (outline) color in HSL format with an optional animation state.
+
+  ```typescript
+  strokeColor?: IParticleHslAnimation
+  ```
+</ResponseField>
+
+<ResponseField name="strokeOpacity" type="number | undefined">
+  Additional stroke-specific opacity multiplier.
+
+  ```typescript
+  strokeOpacity?: number
+  ```
+</ResponseField>
+
+<ResponseField name="strokeWidth" type="number | undefined">
+  The stroke line width in pixels (after retina scaling).
+
+  ```typescript
+  strokeWidth?: number
+  ```
+</ResponseField>
+
+<ResponseField name="backColor" type="IHsl | undefined">
+  The color shown on the back face of a rolling particle. Used when the `roll` plugin is active.
+
+  ```typescript
+  backColor?: IHsl
+  ```
+</ResponseField>
+
+---
+
+## Shape and effect
+
+<ResponseField name="shape" type="string | undefined">
+  The resolved shape type name for this particle (e.g. `"circle"`, `"square"`, `"star"`).
+
+  ```typescript
+  shape?: string
+  ```
+</ResponseField>
+
+<ResponseField name="shapeClose" type="boolean">
+  When `true`, the shape path is closed before stroking or filling.
+
+  ```typescript
+  shapeClose: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="shapeData" type="IShapeValues | undefined">
+  Shape-specific extra data object merged from the shape options array for this particle's index.
+
+  ```typescript
+  shapeData?: IShapeValues
+  ```
+</ResponseField>
+
+<ResponseField name="sides" type="number">
+  The number of sides used by the shape drawer. Defaults to `24` (used for smooth circular approximations).
+
+  ```typescript
+  sides: number
+  ```
+</ResponseField>
+
+<ResponseField name="effect" type="string | undefined">
+  The resolved effect type name for this particle, if any.
+
+  ```typescript
+  effect?: string
+  ```
+</ResponseField>
+
+<ResponseField name="effectClose" type="boolean">
+  When `true`, the effect path is closed.
+
+  ```typescript
+  effectClose: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="effectData" type="IShapeValues | undefined">
+  Effect-specific extra data object.
+
+  ```typescript
+  effectData?: IShapeValues
+  ```
+</ResponseField>
+
+---
+
+## Rotation
+
+<ResponseField name="rotation" type="number">
+  The particle's current rotation angle in radians.
+
+  ```typescript
+  rotation: number
+  ```
+</ResponseField>
+
+<ResponseField name="isRotating" type="boolean">
+  `true` when the rotation plugin is active for this particle.
+
+  ```typescript
+  isRotating: boolean
+  ```
+</ResponseField>
+
+<ResponseField name="roll" type="IParticleRoll | undefined">
+  Roll animation state. Present only when the roll plugin is loaded and active.
+
+  ```typescript
+  roll?: IParticleRoll
+  ```
+</ResponseField>
+
+---
+
+## Runtime metadata
+
+<ResponseField name="options" type="ParticlesOptions">
+  The fully-resolved `ParticlesOptions` for this individual particle, which may differ from the container's `actualOptions.particles` when particle groups or override options are applied.
+
+  ```typescript
+  options: ParticlesOptions
+  ```
+</ResponseField>
+
+<ResponseField name="retina" type="IParticleRetinaProps">
+  Retina-scaled values for speed, size, and distance cached at particle initialization.
+
+  ```typescript
+  retina: IParticleRetinaProps
+  ```
+</ResponseField>
+
+<ResponseField name="zIndexFactor" type="number">
+  A `0–1` factor derived from `position.z / container.zLayers`. Scaled by `zIndex.opacityRate` and `zIndex.sizeRate` to produce depth-based visual changes.
+
+  ```typescript
+  zIndexFactor: number
+  ```
+</ResponseField>
+
+<ResponseField name="randomIndexData" type="number | undefined">
+  A stable random index used when selecting items from arrays in options (shape types, fill colors, etc.) so the same particle always picks the same index.
+
+  ```typescript
+  randomIndexData?: number
+  ```
+</ResponseField>
+
+<ResponseField name="bubble" type="IBubbleParticleData">
+  Runtime state injected by the bubble interaction plugin. Contains overrides for `color`, `opacity`, and `radius`.
+
+  ```typescript
+  bubble: IBubbleParticleData
+  ```
+</ResponseField>
+
+<ResponseField name="slow" type="ISlowParticleData">
+  Runtime state for the slow-on-hover interaction.
+
+  ```typescript
+  slow: ISlowParticleData
+  ```
+</ResponseField>
+
+<ResponseField name="ignoresResizeRatio" type="boolean">
+  When `true`, the particle's size is not recalculated when the canvas is resized.
+
+  ```typescript
+  ignoresResizeRatio: boolean
+  ```
+</ResponseField>
+
+---
+
+## Methods
+
+### init
+
+Initializes (or re-initializes) the particle with a given id, optional position, optional option overrides, and an optional group name. Called by `ParticlesManager` when creating or recycling particles.
+
+```typescript
+init(
+  id: number,
+  position?: ICoordinates,
+  overrideOptions?: RecursivePartial<IParticlesOptions>,
+  group?: string,
+): void
+```
+
+---
+
+### destroy
+
+Marks the particle as destroyed and notifies plugins and updaters. A particle with `unbreakable = true` will not be destroyed.
+
+```typescript
+destroy(override?: boolean): void
+```
+
+<ParamField path="override" type="boolean">
+  When `true`, passes the override flag to plugin callbacks, allowing forced removal despite protection flags.
+</ParamField>
+
+---
+
+### reset
+
+Invokes the `reset()` callback on each particle updater, restoring any per-updater runtime state to defaults. Called when a particle loses a life (lives plugin).
+
+```typescript
+reset(): void
+```
+
+---
+
+### draw
+
+Triggers the canvas render pipeline for this particle for the given delta.
+
+```typescript
+draw(delta: IDelta): void
+```
+
+---
+
+### getRadius
+
+Returns the effective radius of the particle in canvas pixels. If the bubble plugin has set an override radius, that value is returned.
+
+```typescript
+getRadius(): number
+```
+
+**Returns:** `number`
+
+```typescript
+console.log(particle.getRadius()); // e.g. 4.5
+```
+
+---
+
+### getPosition
+
+Returns the display position of the particle — `position` plus any `offset` applied by interaction plugins.
+
+```typescript
+getPosition(): ICoordinates3d
+```
+
+**Returns:** `ICoordinates3d` — an object with `x`, `y`, and `z` number fields.
+
+```typescript
+const pos = particle.getPosition();
+console.log(pos.x, pos.y, pos.z);
+```
+
+---
+
+### getOpacity
+
+Computes the final fill, base, and stroke opacity values after applying z-index depth scaling and bubble overrides.
+
+```typescript
+getOpacity(): IParticleOpacityData
+```
+
+**Returns:**
+
+```typescript
+interface IParticleOpacityData {
+  fillOpacity: number;
+  opacity: number;
+  strokeOpacity: number;
+}
+```
+
+---
+
+### getFillColor
+
+Returns the particle's current fill color in HSL format, accounting for roll back-face display.
+
+```typescript
+getFillColor(): IHsl | undefined
+```
+
+---
+
+### getStrokeColor
+
+Returns the particle's current stroke color in HSL format, accounting for roll back-face display.
+
+```typescript
+getStrokeColor(): IHsl | undefined
+```
+
+---
+
+### getAngle
+
+Returns the effective display angle of the particle in radians, combining `rotation` with the velocity angle when `pathRotation` is enabled.
+
+```typescript
+getAngle(): number
+```
+
+---
+
+### getMass
+
+Returns the particle's mass, calculated as `radius² × π × 0.5`. Used by physics interactions.
+
+```typescript
+getMass(): number
+```
+
+---
+
+### isVisible
+
+Returns `true` if the particle is not destroyed, not spawning, and is positioned within the canvas bounds.
+
+```typescript
+isVisible(): boolean
+```
+
+---
+
+### isInsideCanvas
+
+Returns `true` if the particle's bounding circle overlaps the canvas area.
+
+```typescript
+isInsideCanvas(): boolean
+```
+
+---
+
+### isShowingBack
+
+Returns `true` when the particle's roll angle has crossed the threshold that makes the back face visible (used by the roll plugin).
+
+```typescript
+isShowingBack(): boolean
+```
+
+---
+
+## Particle manipulation example
+
+```typescript
+const container = await tsParticles.load({
+  id: "tsparticles",
+  options: {
+    particles: {
+      number: { value: 50 },
+      move: { enable: true, speed: 3 },
+      size: { value: 5 },
+    },
+  },
+});
+
+if (container) {
+  // Pause animation, modify particles, then resume
+  container.pause();
+
+  for (const p of container.particles.array) {
+    if (!p.destroyed) {
+      // Teleport all particles to the center
+      p.position.x = container.canvas.size.width / 2;
+      p.position.y = container.canvas.size.height / 2;
+    }
+  }
+
+  container.play();
+}
+```
